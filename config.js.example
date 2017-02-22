@@ -1,0 +1,2 @@
+exports.API = 'TELEGRAM-API';
+exports.adminID = 'CHAT-ID';
