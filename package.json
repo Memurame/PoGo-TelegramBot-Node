@@ -23,7 +23,12 @@
   },
   "homepage": "https://github.com/n30nl1ght/PoGo-TelegramBot-Node#readme",
   "dependencies": {
-    "autobahn": "^0.11.2",
+    "body-parser": "^1.16.1",
+    "express": "^4.14.1",
+    "http": "0.0.0",
+    "mysql": "^2.13.0",
+    "node-rest-client": "^2.5.0",
+    "queue": "^4.2.1",
     "telebot": "^1.0.7"
   }
 }

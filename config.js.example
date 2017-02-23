@@ -1,2 +1,13 @@
-exports.API = 'TELEGRAM-API';
-exports.adminID = 'CHAT-ID';
+// Telegram
+exports.API = 'TELEGRAM_API';
+exports.adminID = 'YOUR_TELEGRAM_ID';
+
+// Webhook
+exports.IP = '127.0.0.1';
+exports.PORT = '5000';
+
+// DB
+exports.HOST = 'localhost';
+exports.DB = 'DB_NAME';
+exports.USER = 'DB_USER';
+exports.PASS = 'DB_PASS';

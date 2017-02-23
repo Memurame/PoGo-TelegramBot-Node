@@ -1,8 +1,6 @@
-'use strict';
-
-var config = require('./config.js');
-const TeleBot = require('telebot');
-const bot = new TeleBot({
+var config = require('./config');
+var TeleBot = require('telebot');
+var bot = new TeleBot({
     token: config.API,
     webhook: {
         url: 'https://....',
