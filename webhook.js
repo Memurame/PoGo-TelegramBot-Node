@@ -1,10 +1,10 @@
-var express = require('express');
-var bodyParser  = require('body-parser');
-var mysql = require('mysql');
-var teleBot = require('teleBot');
-var config = require('./config');
-var moment = require('moment');
-var pokemonClass = require('./pokemon');
+var express = require('express'),
+    bodyParser  = require('body-parser'),
+    mysql = require('mysql'),
+    teleBot = require('teleBot'),
+    config = require('./config'),
+    moment = require('moment'),
+    pokemonClass = require('./pokemon');
 
 var app = express();
 var pokemon = new pokemonClass();
@@ -40,23 +40,29 @@ function next(array, request, idx) {
 
 function process(array_element, request, callback) {
 
-    var att = request.message.individual_attack;
-    var def = request.message.individual_defense;
-    var sta = request.message.individual_stamina;
-    var iv = 0;
+    var att = request.message.individual_attack,
+        def = request.message.individual_defense,
+        sta = request.message.individual_stamina,
+        iv = 0;
 
     iv = Math.round((att + def + sta)/(15+15+15)*100,-1);
 
     if(array_element.iv_val <= iv){
 
-        var disappear = moment.unix(request.message.disappear_time).format("HH:mm:ss");
-        var expire = moment.unix(request.message.disappear_time - moment().unix()).format("mm[m] ss[s]");
+        var disappear = moment(request.message.disappear_time),
+            disappearFormated = moment.unix(disappear).format("HH:mm:ss"),
+            now = moment().unix(),
+            difference = disappear.diff(now),
+            timeleft = moment.unix(difference).format("mm[m] ss[s]");
+
+
+        if(difference <= 0){ timeleft = "expired"; }
 
         var text = '*' + pokemon.getName(request.message.pokemon_id) + '* mit IV: *' + iv + '*%\n';
         text += 'Angriff: '+ att +' / Verteidigung: '+ def +' / Ausdauer: '+ sta +'\n\n';
         text += 'Attacke 1: ' + pokemon.getMove(request.message.move_1) + '\n';
         text += 'Attacke 2: ' + pokemon.getMove(request.message.move_2) + '\n\n';
-        text += 'Verfügbar bis '+ disappear +' ( ' +  expire + ' )';
+        text += 'Verfügbar bis '+ disappearFormated +' ( ' + timeleft + ' )';
 
         bot.sendMessage(
             array_element.chat_id,
@@ -99,14 +105,14 @@ app.listen(config.PORT, function() {
 });
 
 setInterval(function(){
-    var time = Math.round(new Date().getTime() / 1000);
+    var time = moment().unix();
     for (var i = 0; i < historylist.length; i++) {
         if(historylist[i].message.disappear_time <= time){
             historylist.splice(i,1);
             console.log("Element Entfernt");
         }
     }
-    //console.log(time);
+
 }, 10*1000);
 
 
