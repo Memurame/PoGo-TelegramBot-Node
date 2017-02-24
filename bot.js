@@ -130,7 +130,7 @@ bot.on('/menu', msg => {
 
     var id = msg.from.id;
 
-    let markup = bot.keyboard([
+    var markup = bot.keyboard([
         [bot.button('location', 'location'), 'stumm']
     ], { resize: true });
     return bot.sendMessage(id, 'Hauptmenü', {markup});
@@ -140,14 +140,41 @@ bot.on('/menu', msg => {
 
 
 bot.on(['location'], (msg, self) => {
-    return bot.sendMessage(
-        msg.from.id,
-        'Dein Standort wurde festgelegt.\nSetze nun einen Radius:',
-        { ask: 'radius' });
+
+    var id = msg.from.id;
+
+    loggedin(id, function(user){
+        sql.query('UPDATE chats SET lat = ?, lon = ? WHERE chat_id = ?',
+            [msg.location.latitude, msg.location.longitude, id],
+            function(error,results,fields){
+
+                var markup = bot.keyboard([
+                    [[1],[2],[3]],
+                    [[4],[5],[6]],
+                    [[7],[8][9]]
+                ], { resize: true });
+
+                return bot.sendMessage(
+                    msg.from.id,
+                    'Dein Standort wurde festgelegt.\nSetze nun einen Radius in Meter:',
+                    { ask: 'radius'});
+
+            });
+    });
+
 });
 
-bot.on('ask.radius', msg => { return bot.sendMessage(msg.from.id, 'Der Radius wurde gesetzt.');
+bot.on('ask.radius', msg => {
+    var id = msg.from.id;
 
+    loggedin(id, function(user){
+        sql.query('UPDATE chats SET radius = ? WHERE chat_id = ?',
+            [msg.text, id],
+            function(error,results,fields){
+                return bot.sendMessage(id, 'Der Radius wurde gesetzt.');
+
+            });
+    });
 });
 
 bot.connect();
