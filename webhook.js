@@ -85,7 +85,8 @@ app.post('/', function(request, response) {
             +'LEFT JOIN notify_iv '
             +'ON notify_pokemon.chat_id = notify_iv.chat_id AND notify_pokemon.pokemon_id = notify_iv.pokemon_id '
             +'WHERE notify_pokemon.pokemon_id = ? '
-            +'AND chats.active = 1',[request.body.message.pokemon_id],
+            +'AND chats.active = 1',
+            [request.body.message.pokemon_id],
             function(error,results,fields){
                 if(results.length > 0){
                     historylist.push(request.body);

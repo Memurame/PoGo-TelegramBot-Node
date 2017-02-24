@@ -1,6 +1,8 @@
 // Telegram
 exports.API = 'TELEGRAM_API';
 exports.adminID = 'YOUR_TELEGRAM_ID';
+exports.locale = 'de';
+exports.authentication = false;
 
 // Webhook
 exports.IP = '127.0.0.1';
