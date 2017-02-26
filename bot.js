@@ -19,6 +19,9 @@ var sql = mysql.createConnection({
     password : config.PASS,
     database : config.DB
 });
+
+var menu = [[bot.button('location', 'location'), '/list'],['/add', '/remove']];
+
 sql.connect();
 
 bot.use(require('telebot/modules/ask.js'));
@@ -121,43 +124,108 @@ bot.on('/stop', msg => {
 bot.on('/add', msg => {
 
     var id = msg.from.id;
-    var [cmdName, pkmn] = msg.text.split(' ');
+    loggedin(id, function(user) {
+        var [cmdName, pkmn] = msg.text.split(' '),
+            range = [];
 
-    var array = pokemon.pokemonArray();
-    if(pkmn){
-        var exists = false;
-        for(var i = 0; i < array.length; i++){
-            if(pkmn.toLowerCase() == array[i].toLowerCase()){
-                exists = true;
+        var array = pokemon.pokemonArray();
+        if (pkmn) {
+            var exists = false;
 
-                var insert  = {chat_id: id, pokemon_id: i+1};
-                sql.query('INSERT INTO notify_pokemon SET ?',
-                    insert,
-                    function(error,results,fields){
-                        if(!error){
-                            return bot.sendMessage(
-                                id,
-                                '*' + pkmn + '* wurde zur Benachrichtigungsliste hinzugefügt.',
-                                {'parse': 'Markdown'});
-                        } else {
-                            return bot.sendMessage(
-                                id,
-                                '*' + pkmn + '* bereits in der Liste',
-                                {'parse': 'Markdown'});
-                        }
-                    });
+            if(pkmn.toLowerCase() == 'generation1'){ range[0] = 1; range[1] = 151}
+            else if(pkmn.toLowerCase() == 'generation2'){ range[0] = 152; range[1] = 251}
+            else{
+                for (var i = 0; i < array.length; i++) {
+                    if (pkmn.toLowerCase() == array[i].toLowerCase()) {
+                        exists = true;
+
+                        var insert = {chat_id: id, pokemon_id: i + 1};
+                        sql.query('INSERT INTO notify_pokemon SET ?',
+                            insert,
+                            function (error, results, fields) {
+                                if (!error) {
+                                    return bot.sendMessage(
+                                        id,
+                                        '*' + pkmn + '* wurde zur Benachrichtigungsliste hinzugefügt.',
+                                        {'parse': 'Markdown'});
+                                } else {
+                                    return bot.sendMessage(
+                                        id,
+                                        '*' + pkmn + '* bereits in der Liste',
+                                        {'parse': 'Markdown'});
+                                }
+                            });
+                    }
+                }
+                if (!exists) {
+                    return bot.sendMessage(id, 'Pokemon nicht gefunden. Hast du es richtig geschrieben?');
+                }
             }
+
+            if(range.length > 0){
+
+                var keyBoard = [];
+
+/*
+                sql.query('SELECT pokemon_id FROM notify_pokemon WHERE chat_id = ?',
+                [id],
+                function(error,results,fields){
+
+                });
+                */
+
+                for(var i = range[0] -1; i < range[1]; i++){
+                    var keyBoardButtons = [];
+                    keyBoardButtons.push('/add ' + array[i]);
+                    keyBoard.push(keyBoardButtons);
+                }
+
+
+
+                var markup = bot.keyboard(keyBoard, { resize: true });
+                return bot.sendMessage(
+                    id,
+                    'Welche Pokémon möchtest du zur Liste hinzufügen?',
+                    {markup});
+            }
+        } else {
+            var keyBoard = [],
+                keyBoardButtons = [];
+
+            var markup = bot.keyboard([
+                ['/add generation1'],['/add generation2']
+            ], { resize: true });
+            return bot.sendMessage(
+                id,
+                'Wähle die Generation aus...',
+                {markup});
         }
-        if(!exists){
-            return bot.sendMessage(id, 'Pokemon nicht gefunden. Hast du es richtig geschrieben?');
-        }
+    });
+});
 
 
-    } else {
-        return bot.sendMessage(id, 'Wähle die Generation aus...');
-    }
 
 
+
+bot.on('/list', msg => {
+
+    var id = msg.from.id;
+    var markup = bot.keyboard(menu, { resize: true });
+    sql.query('SELECT * '+
+        'FROM notify_pokemon '+
+        'WHERE chat_id = ?',
+        [id],
+        function(error, results, fields){
+
+            if(!error)
+            {
+                var text = 'Du wirst über folgende Pokémon benachrichtigt:\n';
+                for(var i = 0; i < results.length; i++){
+                    text += pokemon.getName(results[i]['pokemon_id']) + ', ';
+                }
+            }
+            return bot.sendMessage(id, text,{markup});
+        });
 
 
 });
@@ -166,9 +234,7 @@ bot.on('/menu', msg => {
 
     var id = msg.from.id;
 
-    var markup = bot.keyboard([
-        [bot.button('location', 'location')],['/add', '/remove']
-    ], { resize: true });
+    var markup = bot.keyboard(menu, { resize: true });
     return bot.sendMessage(id, 'Hauptmenü', {markup});
 
 
