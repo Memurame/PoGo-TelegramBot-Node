@@ -18,4 +18,7 @@ module.exports = class pokemon{
     getSticker(id){
         return this.stickerJson[id];
     }
+    pokemonArray(){
+        return Object.values(this.pokemonJson);
+    }
 }

@@ -1,7 +1,9 @@
 var config = require('./config'),
     TeleBot = require('telebot'),
-    mysql = require('mysql');
+    mysql = require('mysql'),
+    pokemonClass = require('./pokemon');
 
+var pokemon = new pokemonClass();
 var bot = new TeleBot({
     token: config.API,
     polling: {
@@ -116,12 +118,46 @@ bot.on('/stop', msg => {
 
 });
 
-bot.on('/addpokemon', msg => {
+bot.on('/add', msg => {
 
     var id = msg.from.id;
     var [cmdName, pkmn] = msg.text.split(' ');
 
-    return bot.sendMessage(id, pkmn);
+    var array = pokemon.pokemonArray();
+    if(pkmn){
+        var exists = false;
+        for(var i = 0; i < array.length; i++){
+            if(pkmn.toLowerCase() == array[i].toLowerCase()){
+                exists = true;
+
+                var insert  = {chat_id: id, pokemon_id: i+1};
+                sql.query('INSERT INTO notify_pokemon SET ?',
+                    insert,
+                    function(error,results,fields){
+                        if(!error){
+                            return bot.sendMessage(
+                                id,
+                                '*' + pkmn + '* wurde zur Benachrichtigungsliste hinzugefügt.',
+                                {'parse': 'Markdown'});
+                        } else {
+                            return bot.sendMessage(
+                                id,
+                                '*' + pkmn + '* bereits in der Liste',
+                                {'parse': 'Markdown'});
+                        }
+                    });
+            }
+        }
+        if(!exists){
+            return bot.sendMessage(id, 'Pokemon nicht gefunden. Hast du es richtig geschrieben?');
+        }
+
+
+    } else {
+        return bot.sendMessage(id, 'Wähle die Generation aus...');
+    }
+
+
 
 
 });
@@ -131,7 +167,7 @@ bot.on('/menu', msg => {
     var id = msg.from.id;
 
     var markup = bot.keyboard([
-        [bot.button('location', 'location'), 'stumm']
+        [bot.button('location', 'location')],['/add', '/remove']
     ], { resize: true });
     return bot.sendMessage(id, 'Hauptmenü', {markup});
 
@@ -147,12 +183,6 @@ bot.on(['location'], (msg, self) => {
         sql.query('UPDATE chats SET lat = ?, lon = ? WHERE chat_id = ?',
             [msg.location.latitude, msg.location.longitude, id],
             function(error,results,fields){
-
-                var markup = bot.keyboard([
-                    [[1],[2],[3]],
-                    [[4],[5],[6]],
-                    [[7],[8][9]]
-                ], { resize: true });
 
                 return bot.sendMessage(
                     msg.from.id,
