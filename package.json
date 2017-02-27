@@ -17,7 +17,7 @@
     "bot"
   ],
   "author": "Tom <n30nl1ght@sanktuario.ch>",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/n30nl1ght/PoGo-TelegramBot-Node/issues"
   },
@@ -25,9 +25,11 @@
   "dependencies": {
     "body-parser": "^1.16.1",
     "express": "^4.14.1",
+    "fs": "0.0.1-security",
     "moment": "^2.17.1",
     "mysql": "^2.13.0",
     "queue": "^4.2.1",
     "telebot": "^1.0.7"
-  }
+  },
+  "devDependencies": {}
 }
