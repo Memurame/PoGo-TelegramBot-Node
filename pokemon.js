@@ -19,6 +19,13 @@ module.exports = class pokemon{
         return this.stickerJson[id];
     }
     pokemonArray(){
-        return Object.values(this.pokemonJson);
+
+        var arr = this.pokemonJson;
+        var vals = Object.keys(this.pokemonJson).map(function(key){
+            return arr[key];
+        });
+
+        return vals;
+        //return Object.values(this.pokemonJson);
     }
 }
