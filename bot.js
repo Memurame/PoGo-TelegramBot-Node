@@ -25,9 +25,19 @@ telegram.on('/start', function(msg){
     bot.displayStartInfo(telegram, user);
 });
 
+telegram.on('/id', function(msg){
+    bot.displayId(telegram, msg.from.id);
+});
+
 telegram.on('/add', function(msg){
     let user = bot.doCheck(telegram, msg.from.id);
     if(user) bot.doAdd(telegram, user);
+});
+
+telegram.on('/admin', function(msg){
+    if(bot.doAdminCheck(telegram, msg.from.id)){
+        bot.doGreetAdmin(telegram, msg.from.id);
+    }
 });
 
 /* --------------------------------- */

@@ -1,3 +1,4 @@
+const config = require('../config');
 const Pokemon = require('./Pokemon');
 const User = require('./User');
 
@@ -15,6 +16,12 @@ class Bot{
         //setup user array
         this.users = [];
 
+        //setup admin array
+        this.admins = [];
+
+        //set main admins
+        if(!this.admins.indexOf(config.adminID) >= 0) this.admins.push(config.adminID);
+
     }
 
     doStart(from){
@@ -30,9 +37,21 @@ class Bot{
         )
     }
 
+    displayId(telegram, uid){
+        telegram.sendMessage(uid,
+            "Telegram User ID: " + uid
+        );
+    }
+
     doCheck(telegram, uid){
         if(this.users.hasOwnProperty(uid)) return this.users[uid];
         this.doWarn(telegram, uid);
+        return false;
+    }
+
+    doAdminCheck(telegram, uid){
+        if(this.admins.indexOf(uid) >= 0) return true;
+        this.doAdminWarn(telegram, uid);
         return false;
     }
 
@@ -40,8 +59,16 @@ class Bot{
         telegram.sendMessage(uid, 'Bitte führe den Befehl /start aus um den Bot zu starten.');
     }
 
+    doAdminWarn(telegram, uid){
+        telegram.sendMessage(uid, 'Dieses Kommando ist Admin Benutzern vorbehalten.');
+    }
+
     doAdd(telegram, user){
-        telegram.sendMessage(user.uid, 'Hello World!');
+        telegram.sendMessage(user.uid, 'Funktion wird noch implementiert...');
+    }
+
+    doGreetAdmin(telegram, uid){
+        telegram.sendMessage(uid, 'Willkommen im Admin-Bereich!');
     }
 
 }
