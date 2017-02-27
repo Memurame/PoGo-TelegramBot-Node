@@ -20,7 +20,7 @@ var sql = mysql.createConnection({
     database : config.DB
 });
 
-var menu = [[bot.button('location', 'location'), '/list'],['/add', '/remove']];
+var menu = [[bot.button('location', 'location'), '/list'],['/set generation1', '/set generation2']];
 
 sql.connect();
 
@@ -149,33 +149,6 @@ bot.on('/set', msg => {
 
             if(pkmn.toLowerCase() == 'generation1'){ range[0] = 1; range[1] = 151}
             else if(pkmn.toLowerCase() == 'generation2'){ range[0] = 152; range[1] = 251}
-            else{
-                for (var i = 0; i < array.length; i++) {
-                    if (pkmn.toLowerCase() == array[i].toLowerCase()) {
-                        exists = true;
-
-                        var insert = {chat_id: id, pokemon_id: i + 1};
-                        sql.query('INSERT INTO notify_pokemon SET ?',
-                            insert,
-                            function (error, results, fields) {
-                                if (!error) {
-                                    return bot.sendMessage(
-                                        id,
-                                        '*' + pkmn + '* wurde zur Benachrichtigungsliste hinzugefügt.',
-                                        {'parse': 'Markdown'});
-                                } else {
-                                    return bot.sendMessage(
-                                        id,
-                                        '*' + pkmn + '* bereits in der Liste',
-                                        {'parse': 'Markdown'});
-                                }
-                            });
-                    }
-                }
-                if (!exists) {
-                    return bot.sendMessage(id, 'Pokemon nicht gefunden. Hast du es richtig geschrieben?');
-                }
-            }
 
             if(range.length > 0){
 
@@ -186,16 +159,13 @@ bot.on('/set', msg => {
                 for(var i = range[0] -1; i < range[1]; i++){
                     findInList(id, i +1, function(callback){
                         if(callback){
-                            //console.log('/remove ' + array[this.i]);
                             keyBoardButtons.push(['/remove ' + array[this.i]]);
                         } else {
-                            //console.log('/add ' + array[this.i]);
                             keyBoardButtons.push(['/add ' + array[this.i]]);
                         }
                         currentItemCount++;
 
                         if(totalLength == currentItemCount){
-                            console.log('total:', keyBoardButtons);
                             var markup = bot.keyboard(keyBoardButtons, { resize: true });
                             return bot.sendMessage(
                                 id,
@@ -204,17 +174,6 @@ bot.on('/set', msg => {
                         }
                     }.bind( {i: i} ));
                 }
-
-
-
-
-
-
-
-
-
-
-
 
             }
         } else {
@@ -253,7 +212,7 @@ bot.on('/add', msg => {
                             if (!error) {
                                 return bot.sendMessage(
                                     id,
-                                    '*' + pkmn + '* wurde zur Benachrichtigungsliste hinzugefügt.',
+                                    '*' + pkmn + '* wurde zur Liste hinzugefügt.',
                                     {'parse': 'Markdown'});
                             } else {
                                 return bot.sendMessage(
@@ -265,10 +224,10 @@ bot.on('/add', msg => {
                 }
             }
             if (!exists) {
-                return bot.sendMessage(id, 'Pokemon nicht gefunden. Hast du es richtig geschrieben?');
+                return bot.sendMessage(id,
+                    '*' + pkmn + '* nicht gefunden. Hast du es richtig geschrieben?',
+                    {'parse': 'Markdown'});
             }
-
-
         } else {
 
             return bot.sendMessage(
@@ -277,6 +236,55 @@ bot.on('/add', msg => {
         }
     });
 });
+
+
+bot.on('/remove', msg => {
+
+    var id = msg.from.id;
+    loggedin(id, function(user) {
+        var [cmdName, pkmn] = msg.text.split(' '),
+            range = [];
+
+        var array = pokemon.pokemonArray();
+        if (pkmn) {
+            var exists = false;
+
+
+            for (var i = 0; i < array.length; i++) {
+                if (pkmn.toLowerCase() == array[i].toLowerCase()) {
+                    exists = true;
+
+                    sql.query('DELETE FROM notify_pokemon WHERE chat_id = ? AND pokemon_id = ?',
+                        [id, i + 1],
+                        function (error, results, fields) {
+                            if(results.affectedRows == 1){
+                                return bot.sendMessage(
+                                    id,
+                                    '*' + pkmn + '* wurde aus der Liste entfernt.',
+                                    {'parse': 'Markdown'});
+                            } else {
+                                return bot.sendMessage(
+                                    id,
+                                    '*' + pkmn + '* ist nicht in deiner Liste.',
+                                    {'parse': 'Markdown'});
+                            }
+                        });
+                }
+            }
+            if (!exists) {
+                return bot.sendMessage(id,
+                    '*' + pkmn + '* nicht gefunden. Hast du es richtig geschrieben?',
+                    {'parse': 'Markdown'});
+            }
+        } else {
+
+            return bot.sendMessage(
+                id,
+                'Kein Pokémon ausgewählt.');
+        }
+    });
+});
+
 
 
 
