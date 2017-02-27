@@ -34,9 +34,9 @@ telegram.on('/add', function(msg){
     if(user) bot.doAdd(telegram, user);
 });
 
-telegram.on('/admin', function(msg){
+telegram.on('/backup', function(msg){
     if(bot.doAdminCheck(telegram, msg.from.id)){
-        bot.doGreetAdmin(telegram, msg.from.id);
+        bot.doBackup(telegram, msg.from.id);
     }
 });
 

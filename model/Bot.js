@@ -1,4 +1,5 @@
 const config = require('../config');
+const Storage = require('../persistence/Storage');
 const Pokemon = require('./Pokemon');
 const User = require('./User');
 
@@ -67,8 +68,12 @@ class Bot{
         telegram.sendMessage(user.uid, 'Funktion wird noch implementiert...');
     }
 
-    doGreetAdmin(telegram, uid){
-        telegram.sendMessage(uid, 'Willkommen im Admin-Bereich!');
+    doBackup(telegram, uid){
+        let storage = new Storage();
+        storage.saveToFile({users: this.users, admins: this.admins}, function(status){
+            console.log(status);
+            telegram.sendMessage(uid, status);
+        });
     }
 
 }
