@@ -58,7 +58,7 @@ function findInList(chatID , pokemonID, callback){
 
 
 
-bot.on('/start', msg => {
+bot.on('/start', function(msg) {
 
     var id = msg.from.id;
 
@@ -70,7 +70,7 @@ bot.on('/start', msg => {
                 if(config.authentication){
                     return bot.sendMessage(id, 'Dieser Bot ist nur für VIP und ausgewählte Personen.');
                 } else {
-                    var insert  = {chat_id: id, place: 'burgdorf'};
+                    var insert  = {chat_id: id};
                     sql.query('INSERT INTO chats SET ?',
                         insert,
                         function(error,results,fields){
@@ -101,7 +101,7 @@ bot.on('/start', msg => {
     );
 });
 
-bot.on('/id', msg => {
+bot.on('/id', function(msg) {
 
     var id = msg.from.id;
 
@@ -112,7 +112,7 @@ bot.on('/id', msg => {
 
 
 
-bot.on('/stop', msg => {
+bot.on('/stop', function(msg) {
 
     var id = msg.from.id;
 
@@ -136,7 +136,7 @@ bot.on('/stop', msg => {
 
 });
 
-bot.on('/set', msg => {
+bot.on('/set', function(msg) {
 
     var id = msg.from.id;
     loggedin(id, function(user) {
@@ -189,7 +189,7 @@ bot.on('/set', msg => {
     });
 });
 
-bot.on('/add', msg => {
+bot.on('/add', function(msg) {
 
     var id = msg.from.id;
     loggedin(id, function(user) {
@@ -238,7 +238,7 @@ bot.on('/add', msg => {
 });
 
 
-bot.on('/remove', msg => {
+bot.on('/remove', function(msg) {
 
     var id = msg.from.id;
     loggedin(id, function(user) {
@@ -288,41 +288,58 @@ bot.on('/remove', msg => {
 
 
 
-bot.on('/list', msg => {
+bot.on('/list', function(msg) {
 
     var id = msg.from.id;
-    var markup = bot.keyboard(menu, { resize: true });
-    sql.query('SELECT * '+
-        'FROM notify_pokemon '+
-        'WHERE chat_id = ?',
-        [id],
-        function(error, results, fields){
+    loggedin(id, function(user) {
+        var markup = bot.keyboard(menu, {resize: true});
+        sql.query('SELECT * ' +
+            'FROM notify_pokemon ' +
+            'WHERE chat_id = ?',
+            [id],
+            function (error, results, fields) {
 
-            if(!error)
-            {
-                var text = 'Du wirst über folgende Pokémon benachrichtigt:\n';
-                for(var i = 0; i < results.length; i++){
-                    text += pokemon.getName(results[i]['pokemon_id']) + ', ';
+                if (!error) {
+                    var text = 'Du wirst über folgende Pokémon benachrichtigt:\n';
+                    for (var i = 0; i < results.length; i++) {
+                        text += pokemon.getName(results[i]['pokemon_id']) + ', ';
+                    }
                 }
-            }
-            return bot.sendMessage(id, text,{markup});
-        });
+                return bot.sendMessage(id, text, {markup});
+            });
 
-
+    });
 });
 
-bot.on('/menu', msg => {
+bot.on('/menu', function(msg) {
 
     var id = msg.from.id;
-
-    var markup = bot.keyboard(menu, { resize: true });
-    return bot.sendMessage(id, 'Hauptmenü', {markup});
-
+    loggedin(id, function(user) {
+        var markup = bot.keyboard(menu, {resize: true});
+        return bot.sendMessage(id, 'Hauptmenü', {markup});
+    });
 
 });
 
+bot.on('/reset', function(msg) {
+    var id = msg.from.id;
+    loggedin(id, function(user) {
+        return bot.sendMessage(
+            id,
+            'Wirklich alle deine Einstellungen zurücksetzen?\nBestätige mit "Ja"',
+            {ask: 'reset'});
+    });
+});
 
-bot.on(['location'], (msg, self) => {
+bot.on('ask.reset', function(msg) {
+    var id = msg.from.id;
+    loggedin(id, function(user) {
+        return bot.sendMessage(id, 'Einstellungen wurden zurückgesetzt.');
+    });
+});
+
+
+bot.on(['location'], function(msg, self) {
 
     var id = msg.from.id;
 
@@ -341,7 +358,7 @@ bot.on(['location'], (msg, self) => {
 
 });
 
-bot.on('ask.radius', msg => {
+bot.on('ask.radius', function(msg) {
     var id = msg.from.id;
 
     loggedin(id, function(user){
