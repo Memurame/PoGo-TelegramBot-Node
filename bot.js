@@ -66,6 +66,11 @@ telegram.on('ask.reset', function(msg){
     if(user) bot.doReset(telegram, user, msg.text);
 });
 
+telegram.on('/menu', function(msg){
+    let user = bot.doCheck(telegram, msg.from.id);
+    if(user) bot.doMenu(telegram, user);
+});
+
 telegram.on(['location'], function(msg){
     let user = bot.doCheck(telegram, msg.from.id);
     if(user) bot.doLocation(telegram, user, msg.location);

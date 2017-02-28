@@ -39,6 +39,7 @@ class Bot{
         this.users.forEach(function(user){
             if(user.uid == uid) foundUser = user;
         });
+        console.log(foundUser);
         return foundUser;
     }
 
@@ -54,10 +55,26 @@ class Bot{
         );
     }
 
+    doMenu(telegram, user){
+        var markup = telegram.keyboard(
+            [
+                [telegram.button('location', 'location'), '/list'],
+                ['/set generation1', '/set generation2']
+            ],
+            {resize: true});
+        telegram.sendMessage(user.uid, 'Hauptmenü', {markup});
+    }
+
     doStart(from){
         //create user and append to users if not exists
-        let user = new User(from.id, from.first_name, from.last_name);
+        let config = {
+            'location': {'lat':'', 'lon': '', 'radius': ''},
+            'pokemon': {}
+        };
+        let user = new User(from.id, from.first_name, from.last_name, config);
         if(!this.findUser(from.id)) this.users.push(user);
+
+
         return user;
     }
 

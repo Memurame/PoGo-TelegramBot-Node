@@ -1,9 +1,10 @@
 class User{
 
-    constructor(uid, firstname, lastname){
+    constructor(uid, firstname, lastname, config){
         this.uid = uid;
         this.firstname = firstname || '';
         this.lastname = lastname || '';
+        this.config = config || {};
     }
     
     getName(){
