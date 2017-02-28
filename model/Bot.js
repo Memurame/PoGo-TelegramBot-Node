@@ -20,16 +20,26 @@ class Bot{
         //setup admin array
         this.admins = [];
 
+        //get data from localstorage
+        let storage = new Storage();
+        let self = this;
+        storage.readFromLocal(function(data){
+            console.log(data);
+            try{ self.users = data.users; }catch(err){ }
+            try{ self.admins = data.admins; }catch(err){ }
+        });
+
         //set main admins
-        if(!this.admins.indexOf(config.adminID) >= 0) this.admins.push(config.adminID);
+        if(!this.admins.indexOf(config.adminID.toString()) >= 0) this.admins.push(config.adminID.toString());
 
     }
 
-    doStart(from){
-        //create user and append to users if not exists
-        let user = new User(from.id, from.first_name, from.last_name);
-        if(!this.users.hasOwnProperty(user.uid)) this.users[user.uid] = user;
-        return user;
+    findUser(uid){
+        let foundUser = false;
+        this.users.forEach(function(user){
+            if(user.uid == uid) foundUser = user;
+        });
+        return foundUser;
     }
 
     displayStartInfo(telegram, user){
@@ -44,14 +54,22 @@ class Bot{
         );
     }
 
+    doStart(from){
+        //create user and append to users if not exists
+        let user = new User(from.id, from.first_name, from.last_name);
+        if(!this.findUser(from.id)) this.users.push(user);
+        return user;
+    }
+
     doCheck(telegram, uid){
-        if(this.users.hasOwnProperty(uid)) return this.users[uid];
+        let user = this.findUser(uid);
+        if(user) return user;
         this.doWarn(telegram, uid);
         return false;
     }
 
     doAdminCheck(telegram, uid){
-        if(this.admins.indexOf(uid) >= 0) return true;
+        if(this.admins.indexOf(uid.toString()) >= 0) return true;
         this.doAdminWarn(telegram, uid);
         return false;
     }
@@ -71,6 +89,14 @@ class Bot{
     doBackup(telegram, uid){
         let storage = new Storage();
         storage.saveToFile({users: this.users, admins: this.admins}, function(status){
+            console.log(status);
+            telegram.sendMessage(uid, status);
+        });
+    }
+
+    doSave(telegram, uid){
+        let storage = new Storage();
+        storage.saveToLocal({users: this.users, admins: this.admins}, function(status){
             console.log(status);
             telegram.sendMessage(uid, status);
         });
