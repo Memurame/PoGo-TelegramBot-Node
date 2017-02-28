@@ -40,6 +40,12 @@ telegram.on('/backup', function(msg){
     }
 });
 
+telegram.on('/save', function(msg){
+    if(bot.doAdminCheck(telegram, msg.from.id)){
+        bot.doSave(telegram, msg.from.id);
+    }
+});
+
 /* --------------------------------- */
 
 telegram.connect();

@@ -20,6 +20,15 @@ class Bot{
         //setup admin array
         this.admins = [];
 
+        //get data from localstorage
+        let storage = new Storage();
+        let self = this;
+        storage.readFromLocal(function(data){
+            console.log(data);
+            try{ self.users = data.users; }catch(err){ }
+            try{ self.admins = data.admins; }catch(err){ }
+        });
+
         //set main admins
         if(!this.admins.indexOf(config.adminID.toString()) >= 0) this.admins.push(config.adminID.toString());
 
@@ -33,13 +42,6 @@ class Bot{
         return foundUser;
     }
 
-    doStart(from){
-        //create user and append to users if not exists
-        let user = new User(from.id, from.first_name, from.last_name);
-        if(!this.findUser(from.id)) this.users.push(user);
-        return user;
-    }
-
     displayStartInfo(telegram, user){
         telegram.sendMessage(user.uid,
             "Willkommen zum Pokemon Go Telegram Bot " + user.getName() + "!"
@@ -50,6 +52,13 @@ class Bot{
         telegram.sendMessage(uid,
             "Telegram User ID: " + uid
         );
+    }
+
+    doStart(from){
+        //create user and append to users if not exists
+        let user = new User(from.id, from.first_name, from.last_name);
+        if(!this.findUser(from.id)) this.users.push(user);
+        return user;
     }
 
     doCheck(telegram, uid){
@@ -80,6 +89,14 @@ class Bot{
     doBackup(telegram, uid){
         let storage = new Storage();
         storage.saveToFile({users: this.users, admins: this.admins}, function(status){
+            console.log(status);
+            telegram.sendMessage(uid, status);
+        });
+    }
+
+    doSave(telegram, uid){
+        let storage = new Storage();
+        storage.saveToLocal({users: this.users, admins: this.admins}, function(status){
             console.log(status);
             telegram.sendMessage(uid, status);
         });
