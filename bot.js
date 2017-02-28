@@ -17,12 +17,19 @@ let telegram = new TeleBot({
         retryTimeout: 5000
     }
 });
+telegram.use(require('telebot/modules/ask.js'));
 
 /* ---- set telegram commands ------ */
 
 telegram.on('/start', function(msg){
     let user = bot.doStart(msg.from);
     bot.displayStartInfo(telegram, user);
+});
+telegram.on('/stop', function(msg){
+    let user = bot.doCheck(telegram, msg.from.id);
+    if(user){
+        bot.doStop(telegram, user);
+    }
 });
 
 telegram.on('/id', function(msg){
@@ -32,6 +39,41 @@ telegram.on('/id', function(msg){
 telegram.on('/add', function(msg){
     let user = bot.doCheck(telegram, msg.from.id);
     if(user) bot.doAdd(telegram, user);
+});
+
+telegram.on('/remove', function(msg){
+    let user = bot.doCheck(telegram, msg.from.id);
+    if(user) bot.doRemove(telegram, msg.text);
+});
+
+telegram.on('/set', function(msg){
+    let user = bot.doCheck(telegram, msg.from.id);
+    if(user) bot.doSetGeneration(telegram, msg.text);
+});
+
+telegram.on('/list', function(msg){
+    let user = bot.doCheck(telegram, msg.from.id);
+    if(user) bot.doList(telegram, user);
+});
+
+telegram.on('/reset', function(msg){
+    let user = bot.doCheck(telegram, msg.from.id);
+    if(user) bot.doResetConfirm(telegram, user);
+});
+
+telegram.on('ask.reset', function(msg){
+    let user = bot.doCheck(telegram, msg.from.id);
+    if(user) bot.doReset(telegram, user, msg.text);
+});
+
+telegram.on(['location'], function(msg){
+    let user = bot.doCheck(telegram, msg.from.id);
+    if(user) bot.doLocation(telegram, user, msg.location);
+});
+
+telegram.on('ask.radius', function(msg){
+    let user = bot.doCheck(telegram, msg.from.id);
+    if(user) bot.doLocationRadius(telegram, user, msg.text);
 });
 
 telegram.on('/backup', function(msg){

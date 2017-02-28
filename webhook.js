@@ -4,7 +4,7 @@ var express = require('express'),
     teleBot = require('teleBot'),
     config = require('./config'),
     moment = require('moment'),
-    pokemonClass = require('./pokemon');
+    pokemonClass = require('./OLD/pokemon');
 
 var app = express();
 var pokemon = new pokemonClass();

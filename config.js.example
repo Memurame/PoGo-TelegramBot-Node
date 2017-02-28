@@ -1,6 +1,6 @@
 // Telegram
 exports.API = 'TELEGRAM_API';
-exports.adminID = 'YOUR_TELEGRAM_ID';
+exports.adminID = YOUR_TELEGRAM_ID;
 exports.locale = 'de';
 exports.authentication = false;
 

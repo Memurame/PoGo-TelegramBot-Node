@@ -61,6 +61,13 @@ class Bot{
         return user;
     }
 
+    doStop(telegram, user){
+        let markup = telegram.inlineKeyboard([
+            [telegram.inlineButton('Starten', { callback: '/start' })]
+        ]);
+        telegram.sendMessage(user.uid, 'Funktion wird noch implementiert...', {markup});
+    }
+
     doCheck(telegram, uid){
         let user = this.findUser(uid);
         if(user) return user;
@@ -85,6 +92,50 @@ class Bot{
     doAdd(telegram, user){
         telegram.sendMessage(user.uid, 'Funktion wird noch implementiert...');
     }
+
+    doRemove(telegram, user){
+        telegram.sendMessage(user.uid, 'Funktion wird noch implementiert...');
+    }
+
+    doSetGeneration(telegram, user, cmd){
+        telegram.sendMessage(user.uid, 'Funktion wird noch implementiert...');
+    }
+
+    doList(telegram, user){
+        telegram.sendMessage(user.uid, 'Funktion wird noch implementiert...');
+    }
+
+    doResetConfirm(telegram, user){
+        telegram.sendMessage(
+            user.uid,
+            'Wirklich alle deine Einstellungen zurücksetzen?\nBestätige mit "Ja"',
+            {ask: 'reset'});
+    }
+
+    doReset(telegram, user, answere){
+        // Reset der Userconfig implementieren und setzen des active status auf false
+
+        telegram.sendMessage(user.uid, 'Einstellungen wurden zurückgesetzt.');
+    }
+
+    doLocation(telegram, user, location){
+        // Speichern in der localeStorage muss noch implementiert werden
+        //location.latitude
+        //location.longitude
+
+        telegram.sendMessage(user.uid,
+            'Dein Standort wurde festgelegt.\nSetze nun einen Radius in Meter:',
+            { ask: 'radius'});
+    }
+
+    doLocationRadius(telegram, user, radius){
+        // Speichern in der localeStorage muss noch implementiert werden
+
+        telegram.sendMessage(user.uid,
+            'Der Radius von *' + radius + '* wurde gesetzt.',
+            {'parse': 'Markdown'});
+    }
+
 
     doBackup(telegram, uid){
         let storage = new Storage();

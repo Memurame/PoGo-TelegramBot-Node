@@ -1,4 +1,4 @@
-var config = require('./config'),
+var config = require('./../config'),
     TeleBot = require('telebot'),
     mysql = require('mysql'),
     pokemonClass = require('./pokemon');
