@@ -38,17 +38,19 @@ telegram.on('/id', function(msg){
 
 telegram.on('/add', function(msg){
     let user = bot.doCheck(telegram, msg.from.id);
-    if(user) bot.doAdd(telegram, user);
+    let [cmdName, pkmn, iv] = msg.text.split(' ');
+    if(user) bot.doAdd(telegram, user, pkmn, iv);
 });
 
 telegram.on('/remove', function(msg){
     let user = bot.doCheck(telegram, msg.from.id);
-    if(user) bot.doRemove(telegram, msg.text);
+    let [cmdName, pkmn] = msg.text.split(' ');
+    if(user) bot.doRemove(telegram, user, pkmn);
 });
 
 telegram.on('/set', function(msg){
     let user = bot.doCheck(telegram, msg.from.id);
-    if(user) bot.doSetGeneration(telegram, msg.text);
+    if(user) bot.doSetGeneration(telegram, user, msg.text);
 });
 
 telegram.on('/list', function(msg){

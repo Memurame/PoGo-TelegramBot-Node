@@ -20,18 +20,29 @@ class Bot{
         //setup admin array
         this.admins = [];
 
+        //setup list array
+        this.list = [];
+
         //get data from localstorage
         let storage = new Storage();
         let self = this;
         storage.readFromLocal(function(data){
-            console.log(data);
             try{ self.users = data.users; }catch(err){ }
             try{ self.admins = data.admins; }catch(err){ }
+            try{ self.list = data.pokemon; }catch(err){ }
         });
 
         //set main admins
-        if(!this.admins.indexOf(config.adminID.toString()) >= 0) this.admins.push(config.adminID.toString());
+        if(this.admins.indexOf(config.adminID.toString()) == -1) this.admins.push(config.adminID.toString());
 
+        // set pokemon into list
+        if(this.pokemon.getList().length != this.list.length){
+            if(this.list.length == 0){
+                for(let i = 0; i < this.pokemon.getList().length; i++){
+                    this.list.push({pid: i+1, users: []});
+                }
+            }
+        }
     }
 
     findUser(uid){
@@ -39,7 +50,6 @@ class Bot{
         this.users.forEach(function(user){
             if(user.uid == uid) foundUser = user;
         });
-        console.log(foundUser);
         return foundUser;
     }
 
@@ -63,18 +73,15 @@ class Bot{
             ],
             {resize: true});
         telegram.sendMessage(user.uid, 'Hauptmenü', {markup});
+
+
     }
 
     doStart(from){
         //create user and append to users if not exists
-        let config = {
-            'location': {'lat':'', 'lon': '', 'radius': ''},
-            'pokemon': {}
-        };
-        let user = new User(from.id, from.first_name, from.last_name, config);
+        let user = new User(from.id, from.first_name, from.last_name);
         if(!this.findUser(from.id)) this.users.push(user);
-
-
+        this.doSave();
         return user;
     }
 
@@ -106,12 +113,18 @@ class Bot{
         telegram.sendMessage(uid, 'Dieses Kommando ist Admin Benutzern vorbehalten.');
     }
 
-    doAdd(telegram, user){
-        telegram.sendMessage(user.uid, 'Funktion wird noch implementiert...');
+    doAdd(telegram, user, pokemonname, iv){
+        let pid = this.pokemon.getID(pokemonname);
+        let msg = this.pokemon.addUser(user.uid, pid, this.list, iv);
+        telegram.sendMessage(user.uid, msg);
+        this.doSave();
     }
 
-    doRemove(telegram, user){
-        telegram.sendMessage(user.uid, 'Funktion wird noch implementiert...');
+    doRemove(telegram, user, pokemonname){
+        let pid = this.pokemon.getID(pokemonname);
+        let msg = this.pokemon.removeUser(user.uid, pid, this.list);
+        telegram.sendMessage(user.uid, msg);
+        this.doSave();
     }
 
     doSetGeneration(telegram, user, cmd){
@@ -164,9 +177,9 @@ class Bot{
 
     doSave(telegram, uid){
         let storage = new Storage();
-        storage.saveToLocal({users: this.users, admins: this.admins}, function(status){
+        storage.saveToLocal({users: this.users, admins: this.admins, pokemon: this.list}, function(status){
             console.log(status);
-            telegram.sendMessage(uid, status);
+            if(telegram && uid) telegram.sendMessage(uid, status);
         });
     }
 
