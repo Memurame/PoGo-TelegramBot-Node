@@ -1,10 +1,11 @@
 class User{
 
-    constructor(uid, firstname, lastname, config){
+    constructor(uid, firstname, lastname, config, pokemon){
         this.uid = uid;
         this.firstname = firstname || '';
         this.lastname = lastname || '';
         this.config = config || {'lat':'', 'lon': '', 'radius': ''};
+        this.pokemon = pokemon || [];
     }
     
     getName(){
@@ -17,10 +18,12 @@ class User{
         return name;
     }
 
-    /*
+
     addPokemon(pid){
+        if(!pid) return 'Pokémon wurde nicht gefunden.\nÜberprüfe den Namen.';
+
         if(this.pokemon.indexOf(pid) == -1){
-            this.pokemon.push(pid);
+            this.pokemon.push({pid: pid, iv: ''});
             return true;
         }
         return false;
@@ -34,7 +37,7 @@ class User{
         }
         return false;
     }
-    */
+
 }
 
 module.exports = User;

@@ -20,29 +20,16 @@ class Bot{
         //setup admin array
         this.admins = [];
 
-        //setup list array
-        this.list = [];
-
         //get data from localstorage
         let storage = new Storage();
         let self = this;
         storage.readFromLocal(function(data){
             try{ self.users = data.users; }catch(err){ }
             try{ self.admins = data.admins; }catch(err){ }
-            try{ self.list = data.pokemon; }catch(err){ }
         });
 
         //set main admins
         if(this.admins.indexOf(config.adminID.toString()) == -1) this.admins.push(config.adminID.toString());
-
-        // set pokemon into list
-        if(this.pokemon.getList().length != this.list.length){
-            if(this.list.length == 0){
-                for(let i = 0; i < this.pokemon.getList().length; i++){
-                    this.list.push({pid: i+1, users: []});
-                }
-            }
-        }
     }
 
     findUser(uid){
@@ -115,14 +102,14 @@ class Bot{
 
     doAdd(telegram, user, pokemonname, iv){
         let pid = this.pokemon.getID(pokemonname);
-        let msg = this.pokemon.addUser(user.uid, pid, this.list, iv);
+        let msg = user.addPokemon(pid);
         telegram.sendMessage(user.uid, msg);
         this.doSave();
     }
 
     doRemove(telegram, user, pokemonname){
         let pid = this.pokemon.getID(pokemonname);
-        let msg = this.pokemon.removeUser(user.uid, pid, this.list);
+        let msg = user.removePokemon(pid);
         telegram.sendMessage(user.uid, msg);
         this.doSave();
     }
@@ -177,7 +164,7 @@ class Bot{
 
     doSave(telegram, uid){
         let storage = new Storage();
-        storage.saveToLocal({users: this.users, admins: this.admins, pokemon: this.list}, function(status){
+        storage.saveToLocal({users: this.users, admins: this.admins}, function(status){
             console.log(status);
             if(telegram && uid) telegram.sendMessage(uid, status);
         });

@@ -35,14 +35,7 @@ class Pokemon{
     getSticker(id){
         return this.stickers[id];
     }
-
-    getList(){
-        var arr = this.names;
-        var list = Object.keys(this.names);
-
-        return list;
-    }
-
+/*
     addUser(uid, pid, list, iv){
         iv = iv || '';
         if(!pid) return 'Pokémon wurde nicht gefunden.\nÜberprüfe den Namen.';
@@ -64,7 +57,7 @@ class Pokemon{
             return this.getName(pid) + ' wurde aus der Liste entfernt';
         }
     }
-
+*/
 
 }
 
