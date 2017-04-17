@@ -4,10 +4,25 @@ class User{
         this.uid = uid;
         this.firstname = firstname || '';
         this.lastname = lastname || '';
-        this.config = config || {'lat':'', 'lon': '', 'radius': ''};
+        this.config = config || {'lat':'', 'lon': '', 'radius': '', 'active': '1'};
         this.pokemon = pokemon || [];
     }
-    
+
+
+    existsPokemon(pid){
+        console.log("pid: " + pid);
+        let exists = false;
+        if(this.pokemon && this.pokemon.length){
+            this.pokemon.forEach(function (pkmn) {
+                if (pkmn.pid == pid) {
+                    exists =  pkmn;
+                }
+            });
+        }
+
+        return exists;
+
+    }
     getName(){
         let name = '';
         if(this.firstname != '') name = this.firstname;
@@ -20,13 +35,16 @@ class User{
 
 
     addPokemon(pid){
-        if(!pid) return 'Pokémon wurde nicht gefunden.\nÜberprüfe den Namen.';
-
-        if(this.pokemon.indexOf(pid) == -1){
+        let check = this.existsPokemon(pid);
+        if(check){
+            console.log("return oben");
+            return false;
+        } else {
             this.pokemon.push({pid: pid, iv: ''});
+            console.log("return unten");
             return true;
         }
-        return false;
+
     }
 
     removePokemon(pid){

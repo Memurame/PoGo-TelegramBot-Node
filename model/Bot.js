@@ -66,8 +66,14 @@ class Bot{
 
     doStart(from){
         //create user and append to users if not exists
+        let exists = this.findUser(from.id);
         let user = new User(from.id, from.first_name, from.last_name);
-        if(!this.findUser(from.id)) this.users.push(user);
+        if(exists){
+            exists['config']['active'] = 1;
+        } else {
+
+            this.users.push(user);
+        }
         this.doSave();
         return user;
     }
@@ -76,12 +82,17 @@ class Bot{
         let markup = telegram.inlineKeyboard([
             [telegram.inlineButton('Starten', { callback: '/start' })]
         ]);
-        telegram.sendMessage(user.uid, 'Funktion wird noch implementiert...', {markup});
+        user['config']['active'] = 0;
+        telegram.sendMessage(user.uid, 'Du erhälst nun keine Benachrichtigung mehr...', {markup});
+        this.doSave();
     }
 
     doCheck(telegram, uid){
         let user = this.findUser(uid);
-        if(user) return user;
+        if(user){
+            user = new User(user['uid'], user['firstname'], user['lastname'], user['config'], user['pokemon']);
+            return user;
+        }
         this.doWarn(telegram, uid);
         return false;
     }
@@ -101,8 +112,16 @@ class Bot{
     }
 
     doAdd(telegram, user, pokemonname, iv){
+        let msg = '';
         let pid = this.pokemon.getID(pokemonname);
-        let msg = user.addPokemon(pid);
+        if(pid){
+            let pokemon = user.addPokemon(pid);
+            if(pokemon){
+                msg = this.pokemon.getName(pid) + ' wurde hinzugefügt';
+            }
+        } else {
+            msg = 'Pokémon wurde nicht gefunden.\nÜberprüfe den Namen.';
+        }
         telegram.sendMessage(user.uid, msg);
         this.doSave();
     }
