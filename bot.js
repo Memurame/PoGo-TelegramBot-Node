@@ -58,6 +58,12 @@ telegram.on('/list', function(msg){
     if(user) bot.doList(telegram, user);
 });
 
+telegram.on('/raid', function(msg){
+    let user = bot.doCheck(telegram, msg.from.id);
+    let [cmdName, status] = msg.text.split(' ');
+    if(user) bot.doRaid(telegram, user, status);
+});
+
 telegram.on('/reset', function(msg){
     let user = bot.doCheck(telegram, msg.from.id);
     if(user) bot.doResetConfirm(telegram, user);

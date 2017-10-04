@@ -111,13 +111,32 @@ class Bot{
         telegram.sendMessage(uid, 'Dieses Kommando ist Admin Benutzern vorbehalten.');
     }
 
+    doRaid(telegram, user, status){
+        let msg = '';
+        if(status == "on" || status == "off"){
+            user['config']['raid'] = (status == "on" ? "1" : "0");
+            if(user['config']['raid'] == "0"){
+                msg = 'Du erhälst nun keine RAID Benachrichtigung mehr...';
+            } else {
+                msg = 'Du erhälst nun RAID Benachrichtigungen...';
+            }
+        } else {
+            msg = 'Verwende On oder Off!'
+        }
+        telegram.sendMessage(user.uid, msg);
+
+        this.doSave();
+    }
+
     doAdd(telegram, user, pokemonname, iv){
         let msg = '';
         let pid = this.pokemon.getID(pokemonname);
         if(pid){
-            let pokemon = user.addPokemon(pid);
+            let pokemon = user.addPokemon(pid, iv);
             if(pokemon){
                 msg = this.pokemon.getName(pid) + ' wurde hinzugefügt';
+            } else {
+                msg = this.pokemon.getName(pid) + ' bereits vorhanden!';
             }
         } else {
             msg = 'Pokémon wurde nicht gefunden.\nÜberprüfe den Namen.';
@@ -127,8 +146,13 @@ class Bot{
     }
 
     doRemove(telegram, user, pokemonname){
+        let msg = '';
         let pid = this.pokemon.getID(pokemonname);
-        let msg = user.removePokemon(pid);
+        if(user.removePokemon(pid)){
+            msg = this.pokemon.getName(pid) + ' wurde entfernt.';
+        } else {
+            msg = this.pokemon.getName(pid) + ' nicht in Liste vorhanden!';
+        }
         telegram.sendMessage(user.uid, msg);
         this.doSave();
     }
@@ -155,21 +179,21 @@ class Bot{
     }
 
     doLocation(telegram, user, location){
-        // Speichern in der localeStorage muss noch implementiert werden
-        //location.latitude
-        //location.longitude
+        user['config']['lat'] = location.latitude;
+        user['config']['lon'] = location.latitude;
 
         telegram.sendMessage(user.uid,
             'Dein Standort wurde festgelegt.\nSetze nun einen Radius in Meter:',
             { ask: 'radius'});
+        this.doSave();
     }
 
     doLocationRadius(telegram, user, radius){
-        // Speichern in der localeStorage muss noch implementiert werden
-
+        user['config']['radius'] = radius;
         telegram.sendMessage(user.uid,
-            'Der Radius von *' + radius + '* wurde gesetzt.',
+            'Ein Radius von *' + radius + 'm* wurde gesetzt.',
             {'parse': 'Markdown'});
+        this.doSave();
     }
 
 
