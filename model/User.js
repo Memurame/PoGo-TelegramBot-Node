@@ -4,7 +4,7 @@ class User{
         this.uid = uid;
         this.firstname = firstname || '';
         this.lastname = lastname || '';
-        this.config = config || {'lat':'', 'lon': '', 'radius': '', 'active': '1', 'raid': '1'};
+        this.config = config || {'lat':'', 'lon': '', 'radius': '', 'active': '1', 'raid': '1', 'mid': '0'};
         this.pokemon = pokemon || [];
     }
 

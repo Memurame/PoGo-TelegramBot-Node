@@ -180,7 +180,7 @@ class Bot{
 
     doLocation(telegram, user, location){
         user['config']['lat'] = location.latitude;
-        user['config']['lon'] = location.latitude;
+        user['config']['lon'] = location.longitude;
 
         telegram.sendMessage(user.uid,
             'Dein Standort wurde festgelegt.\nSetze nun einen Radius in Meter:',
@@ -212,6 +212,8 @@ class Bot{
             if(telegram && uid) telegram.sendMessage(uid, status);
         });
     }
+
+
 
 }
 
