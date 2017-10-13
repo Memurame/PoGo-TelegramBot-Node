@@ -23,7 +23,6 @@ class User{
         return exists;
     }
     getPokemonIndex(pid){
-        console.log("pid: " + pid);
         let arrIndex = false;
         if(this.pokemon && this.pokemon.length){
             this.pokemon.forEach(function (pkmn, index) {

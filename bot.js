@@ -101,6 +101,27 @@ telegram.on('/save', function(msg){
     }
 });
 
+telegram.on('callbackQuery', function(msg){
+
+
+    let user = bot.doCheck(telegram, msg.from.id);
+
+
+    if(user){
+        let [cmdName, val1, val2] = msg.data.split(' ');
+        if(cmdName == '/remove'){
+            bot.doRemove(telegram, user, val1);
+        } else if(cmdName == '/getLocation'){
+            telegram.sendLocation(msg.from.id, [val1, val2], {'replyToMessage': msg.id});
+        }
+    }
+
+    console.log(msg);
+
+});
+
+
+
 /* --------------------------------- */
 
 telegram.connect();

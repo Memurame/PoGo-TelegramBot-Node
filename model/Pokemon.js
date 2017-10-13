@@ -35,29 +35,6 @@ class Pokemon{
     getSticker(id){
         return this.stickers[id];
     }
-/*
-    addUser(uid, pid, list, iv){
-        iv = iv || '';
-        if(!pid) return 'Pokémon wurde nicht gefunden.\nÜberprüfe den Namen.';
-        if(list[pid-1]['users'].indexOf(uid) == -1){
-            list[pid-1]['users'].push(uid);
-            return this.getName(pid) + ' wurde der Liste hinzugefügt.';
-        } else {
-            return this.getName(pid) + ' bereits in der Liste vorhanden';
-        }
-
-    }
-    removeUser(uid, pid, list){
-        if(!pid) return 'Pokémon wurde nicht gefunden.\nÜberprüfe den Namen.';
-        let index = list[pid-1]['users'].indexOf(uid);
-        if(index == -1){
-            return this.getName(pid) + ' nicht in der Liste vorhanden.';
-        } else {
-            list[pid-1]['users'].splice(index,1);
-            return this.getName(pid) + ' wurde aus der Liste entfernt';
-        }
-    }
-*/
 
 }
 
