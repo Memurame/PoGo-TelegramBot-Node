@@ -48,11 +48,6 @@ telegram.on('/remove', function(msg){
     if(user) bot.doRemove(telegram, user, pkmn);
 });
 
-telegram.on('/set', function(msg){
-    let user = bot.doCheck(telegram, msg.from.id);
-    if(user) bot.doSetGeneration(telegram, user, msg.text);
-});
-
 telegram.on('/list', function(msg){
     let user = bot.doCheck(telegram, msg.from.id);
     if(user) bot.doList(telegram, user);

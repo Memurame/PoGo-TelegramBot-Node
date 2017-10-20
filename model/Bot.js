@@ -55,8 +55,7 @@ class Bot{
     doMenu(telegram, user){
         var markup = telegram.keyboard(
             [
-                [telegram.button('location', 'location'), '/list'],
-                ['/set generation1', '/set generation2']
+                [telegram.button('location', 'location'), '/list']
             ],
             {resize: true});
         telegram.sendMessage(user.uid, 'Hauptmenü', {markup});
@@ -155,10 +154,6 @@ class Bot{
         }
         telegram.sendMessage(user.uid, msg);
         this.doSave();
-    }
-
-    doSetGeneration(telegram, user, cmd){
-        telegram.sendMessage(user.uid, 'Funktion wird noch implementiert...');
     }
 
     doList(telegram, user){

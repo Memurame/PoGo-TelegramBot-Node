@@ -27,10 +27,12 @@ bot.users.forEach(function(user){
         user = new User(user['uid'], user['firstname'], user['lastname'], user['config'], user['pokemon']);
 
         var mid = '';
+        var gid = '';
 
         if(user['config']['lat'] &&
             user['config']['lon'] &&
-            user['config']['radius']){
+            user['config']['radius'] &&
+            user['config']['active']){
 
             var earth_radius = 6371;
             var radius = user['config']['radius'] / 1000;
@@ -42,6 +44,7 @@ bot.users.forEach(function(user){
 
             var ajdata = {
                 'mid': user['config']['mid'],
+                'gid': user['config']['gid'],
                 'w': minLon,
                 'e': maxLon,
                 'n': maxLat,
@@ -58,14 +61,15 @@ bot.users.forEach(function(user){
 
             request(options, function (error, response, body){
                 var data = JSON.parse(body);
-                var anz = data.pokemons.length;
-                console.log("Anzahl = " + anz);
-                if(anz > 0){
+                var anzPkmn = data.pokemons.length;
+                var anzGym = data.gyms.length;
+                console.log("Anzahl Pkmn = " + anzPkmn);
+                console.log("Anzahl Gym = " + anzGym);
+                if(anzPkmn > 0 && user['config']['pkmn']){
                     data.pokemons.forEach(function(pkmn){
                         if(pkmn['eid'] > mid){
                             mid = pkmn['eid'];
                         }
-                        console.log(pkmn);
                         if(user.getPokemonIndex(pkmn.pokemon_id) !== false){
 
                             let disappear = moment(pkmn['disappear_time']),
@@ -100,6 +104,43 @@ bot.users.forEach(function(user){
 
                     });
                     user['config']['mid'] = mid;
+                    bot.doSave();
+                }
+
+                if(anzGym > 0 && user['config']['gym']){
+                    data.gyms.forEach(function(gym) {
+                        if (gym['ts'] > gid) {
+                            gid = gym['ts'];
+                        }
+
+                        let now = moment().unix(),
+                            rb = moment.unix(gym['rb']).format("HH:mm:ss"),
+                            re = moment.unix(gym['re']).format("HH:mm:ss"),
+                            text =  "";
+
+                        if(gym['lvl']){
+                            text =  '*' + gym['name'] + '*\n';
+                            text += 'Level ' + gym['lvl'] + '\n';
+                            if(now > gym['rs'] && now < gym['rb']){
+                                text += 'Raid startet um ' + rb;
+                            }
+                            else if (now > gym['rb'] && now < gym['re']){
+                                text += 'Raid bis ' + re;
+                            }
+
+                            if(gym['rpid']){
+                                text += '\n' + pokemon.getName(gym['rpid']) + ' CP: ' + gym['rcp']
+                            }
+
+                            telegram.sendMessage(
+                                user['uid'],
+                                text,
+                                {'parse': 'Markdown'}
+                            );
+                        }
+
+                    });
+                    user['config']['gid'] = gid;
                     bot.doSave();
                 }
 
