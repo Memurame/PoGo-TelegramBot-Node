@@ -4,11 +4,13 @@ class User{
         this.uid = uid;
         this.firstname = firstname || '';
         this.lastname = lastname || '';
-        this.config = config || {'lat':'',
+        this.config = config || {
+                'lat':'',
                 'lon': '',
                 'radius': '',
                 'active': '1',
-                'gyms': '1',
+                'raid': '1',
+                "raid_lvl": '3',
                 'pkmn': '1',
                 'mid': '0',
                 'gid': '0'};

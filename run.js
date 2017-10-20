@@ -107,7 +107,7 @@ bot.users.forEach(function(user){
                     bot.doSave();
                 }
 
-                if(anzGym > 0 && user['config']['gym']){
+                if(anzGym > 0 && user['config']['raid']){
                     data.gyms.forEach(function(gym) {
                         if (gym['ts'] > gid) {
                             gid = gym['ts'];
@@ -118,7 +118,10 @@ bot.users.forEach(function(user){
                             re = moment.unix(gym['re']).format("HH:mm:ss"),
                             text =  "";
 
-                        if(gym['lvl']){
+                        if(gym['lvl'] &&
+                            gym['lvl'] >= user['config']['raid_lvl'] &&
+                            now <= gym['re']){
+
                             text =  '*' + gym['name'] + '*\n';
                             text += 'Level ' + gym['lvl'] + '\n';
                             if(now > gym['rs'] && now < gym['rb']){
