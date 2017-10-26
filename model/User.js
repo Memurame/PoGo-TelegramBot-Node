@@ -9,11 +9,11 @@ class User{
                 'lon': '',
                 'radius': '',
                 'active': '1',
-                'raid': '1',
-                "raid_lvl": '3',
-                'pkmn': '1',
-                'mid': '0',
-                'gid': '0'};
+                'raid': 1,
+                "raid_lvl": 3,
+                'pkmn': 1,
+                'mid': 0,
+                'gid': 0};
         this.pokemon = pokemon || [];
     }
 

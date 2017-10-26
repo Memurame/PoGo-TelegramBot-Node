@@ -121,9 +121,10 @@ telegram.on('callbackQuery', function(msg){
 
 
 setInterval(function(){
-    console.log("Test");
+    console.log('finished running some-script.js');
 
-}, 30000);
+
+}, 10000);
 
 
 telegram.connect();
