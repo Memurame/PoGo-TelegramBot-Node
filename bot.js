@@ -38,13 +38,13 @@ telegram.on('/id', function(msg){
 
 telegram.on('/add', function(msg){
     let user = bot.doCheck(telegram, msg.from.id);
-    let [cmdName, pkmn, iv] = msg.text.split(' ');
-    if(user) bot.doAdd(telegram, user, pkmn, iv);
+    let pkmn = msg.text.substr(5).split(',');
+    if(user) bot.doAdd(telegram, user, pkmn);
 });
 
 telegram.on('/remove', function(msg){
     let user = bot.doCheck(telegram, msg.from.id);
-    let [cmdName, pkmn] = msg.text.split(' ');
+    let pkmn = msg.text.substr(8).split(',');
     if(user) bot.doRemove(telegram, user, pkmn);
 });
 
@@ -105,7 +105,9 @@ telegram.on('callbackQuery', function(msg){
     if(user){
         let [cmdName, val1, val2] = msg.data.split(' ');
         if(cmdName == '/remove'){
-            bot.doRemove(telegram, user, val1);
+            var array = [val1];
+            bot.doRemove(telegram, user, array);
+
         } else if(cmdName == '/getLocation'){
             telegram.sendLocation(msg.from.id, [val1, val2], {'replyToMessage': msg.id});
         }
@@ -119,12 +121,12 @@ telegram.on('callbackQuery', function(msg){
 
 /* --------------------------------- */
 
-
+/*
 setInterval(function(){
     console.log('finished running some-script.js');
 
 
 }, 10000);
-
+*/
 
 telegram.connect();

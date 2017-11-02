@@ -127,32 +127,47 @@ class Bot{
         this.doSave();
     }
 
-    doAdd(telegram, user, pokemonname, iv){
-        let msg = '';
-        let pid = this.pokemon.getID(pokemonname);
-        if(pid){
-            let pokemon = user.addPokemon(pid, iv);
-            if(pokemon){
-                msg = this.pokemon.getName(pid) + ' wurde hinzugefügt';
+    doAdd(telegram, user, pkmnArray){
+
+        for(var i = 0; i < pkmnArray.length; i++){
+            let msg = '';
+            let pid = this.pokemon.getID(pkmnArray[i]);
+            if(pid){
+                let pokemon = user.addPokemon(pid);
+                if(pokemon){
+                    msg = this.pokemon.getName(pid) + ' wurde hinzugefügt';
+                } else {
+                    msg = this.pokemon.getName(pid) + ' bereits vorhanden!';
+                }
             } else {
-                msg = this.pokemon.getName(pid) + ' bereits vorhanden!';
+                msg = pkmnArray[i] + ' existiert nicht!';
             }
-        } else {
-            msg = 'Pokémon wurde nicht gefunden.\nÜberprüfe den Namen.';
+            telegram.sendMessage(user.uid, msg);
         }
-        telegram.sendMessage(user.uid, msg);
+
+
+
         this.doSave();
     }
 
-    doRemove(telegram, user, pokemonname){
-        let msg = '';
-        let pid = this.pokemon.getID(pokemonname);
-        if(user.removePokemon(pid)){
-            msg = this.pokemon.getName(pid) + ' wurde entfernt.';
-        } else {
-            msg = this.pokemon.getName(pid) + ' nicht in Liste vorhanden!';
+    doRemove(telegram, user, pkmnArray){
+        console.log(pkmnArray);
+        for(var i = 0; i < pkmnArray.length; i++){
+            let msg = '';
+            let pid = this.pokemon.getID(pkmnArray[i]);
+            if(pid){
+                if(user.removePokemon(pid)){
+                    msg = this.pokemon.getName(pid) + ' wurde entfernt.';
+                } else {
+                    msg = this.pokemon.getName(pid) + ' nicht definiert.';
+                }
+            } else {
+                msg = pkmnArray[i] + ' existiert nicht'
+            }
+
+            telegram.sendMessage(user.uid, msg);
         }
-        telegram.sendMessage(user.uid, msg);
+
         this.doSave();
     }
 
@@ -195,7 +210,6 @@ class Bot{
     doBackup(telegram, uid){
         let storage = new Storage();
         storage.saveToFile({users: this.users, admins: this.admins}, function(status){
-            console.log(status);
             telegram.sendMessage(uid, status);
         });
     }
@@ -203,7 +217,6 @@ class Bot{
     doSave(telegram, uid){
         let storage = new Storage();
         storage.saveToLocal({users: this.users, admins: this.admins}, function(status){
-            console.log(status);
             if(telegram && uid) telegram.sendMessage(uid, status);
         });
     }

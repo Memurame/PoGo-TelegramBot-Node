@@ -53,12 +53,12 @@ class User{
     }
 
 
-    addPokemon(pid, iv = "0"){
+    addPokemon(pid){
         let check = this.existsPokemon(pid);
         if(check){
             return false;
         } else {
-            this.pokemon.push({pid: pid, iv: iv});
+            this.pokemon.push({pid: pid});
             return true;
         }
 
