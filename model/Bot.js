@@ -42,7 +42,8 @@ class Bot{
 
     displayStartInfo(telegram, user){
         telegram.sendMessage(user.uid,
-            "Willkommen zum Pokemon Go Telegram Bot " + user.getName() + "!"
+            "Willkommen zum Pokemon Go Telegram Bot " + user.getName() + "!\n" +
+            "Mit dem Befehl /menu öffnest du das Allgemeine Menu wo du diverse EInstellungen vornehmen kannst."
         )
     }
 
@@ -55,7 +56,8 @@ class Bot{
     doMenu(telegram, user){
         var markup = telegram.keyboard(
             [
-                [telegram.button('location', 'location'), '/list']
+                [telegram.button('location', 'location'), '/list'],
+                ['/raid', '/pokemon']
             ],
             {resize: true});
         telegram.sendMessage(user.uid, 'Hauptmenü', {markup});
@@ -112,17 +114,31 @@ class Bot{
 
     doRaid(telegram, user, status){
         let msg = '';
-        if(status == "on" || status == "off"){
-            user['config']['raid'] = (status == "on" ? "1" : "0");
+        let replyMarkup;
+        if(status <= 5 || status == "off"){
+            user['config']['raid'] = (status == "off" ? "0" : status);
             if(user['config']['raid'] == "0"){
                 msg = 'Du erhälst nun keine RAID Benachrichtigung mehr...';
             } else {
-                msg = 'Du erhälst nun RAID Benachrichtigungen...';
+                msg = 'Du erhälst nun RAID Benachrichtigungen ab Lvl ' + status;
             }
         } else {
-            msg = 'Verwende On oder Off!'
+            msg = 'Gib eine Zahl von 1-5 an. Die Zahl bedeutet ab welchem Raid Lvl das du benachrichtigt werden willst. Zum deaktivieren der Raid Benachrichtigungen benutze sie "Off"\n\nBeispiel:\n/raid off\n/raid 3';
+
+            replyMarkup = telegram.inlineKeyboard([
+                [ telegram.inlineButton('Ab Lvl 1', {callback: '/raid 1'}) ],
+                [ telegram.inlineButton('Ab Lvl 2', {callback: '/raid 2'}) ],
+                [ telegram.inlineButton('Ab Lvl 3', {callback: '/raid 3'}) ],
+                [ telegram.inlineButton('Ab Lvl 4', {callback: '/raid 4'}) ],
+                [ telegram.inlineButton('Nur Lvl 5', {callback: '/raid 5'}) ],
+                [ telegram.inlineButton('Keine Raid Benachrichtigung', {callback: '/raid off'}) ]
+            ]);
         }
-        telegram.sendMessage(user.uid, msg);
+        telegram.sendMessage(
+            user.uid,
+            msg,
+            {'parse': 'Markdown', 'markup': replyMarkup}
+        );
 
         this.doSave();
     }

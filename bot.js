@@ -110,10 +110,11 @@ telegram.on('callbackQuery', function(msg){
 
         } else if(cmdName == '/getLocation'){
             telegram.sendLocation(msg.from.id, [val1, val2], {'replyToMessage': msg.id});
+        } else if(cmdName == '/raid'){
+            bot.doRaid(telegram, user, val1);
         }
     }
 
-    console.log(msg);
 
 });
 
