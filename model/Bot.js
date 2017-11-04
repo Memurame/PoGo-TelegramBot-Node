@@ -263,10 +263,32 @@ class Bot{
         telegram.sendMessage(user.uid, 'Funktion wird noch implementiert...');
     }
 
-    doReset(telegram, user, answere){
-        // Reset der Userconfig implementieren und setzen des active status auf false
+    doReset(telegram, user, reset){
 
-        telegram.sendMessage(user.uid, 'Einstellungen wurden zurückgesetzt.');
+
+        let msg = '';
+        let replyMarkup;
+        if(reset == 'yes'){
+            msg = 'Dein Profil wurde komplet gelöscht.\nDu kannst unten auf den Button klicken um ein neues zu erstellen.';
+
+            replyMarkup = telegram.inlineKeyboard([
+                [ telegram.inlineButton('Neues Profil erstellen', {callback: '/start'}) ]
+            ]);
+
+        } else {
+            msg = '*Profil zurücksetzen.*\nMit diesem Befehl wird dein Profil gelöscht, anschliessend hast du die möglichkeit ein neues zu erstellen mit den Standart Einstellungen.';
+
+            replyMarkup = telegram.inlineKeyboard([
+                [ telegram.inlineButton('Löschen', {callback: '/reset yes'}) ]
+            ]);
+        }
+        telegram.sendMessage(
+            user.uid,
+            msg,
+            {'parse': 'Markdown', 'markup': replyMarkup}
+        );
+
+        this.doSave();
     }
 
     doLocation(telegram, user, location){

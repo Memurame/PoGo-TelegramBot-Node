@@ -75,8 +75,8 @@ telegram.on('/radius', function(msg){
 
 telegram.on('/reset', function(msg){
     let user = bot.doCheck(telegram, msg.from.id);
-    let [cmdName, status] = msg.text.split(' ');
-    if(user) bot.doReset(telegram, user, status);
+    let [cmdName, reset] = msg.text.split(' ');
+    if(user) bot.doReset(telegram, user, reset);
 });
 
 telegram.on('/menu', function(msg){
@@ -111,9 +111,10 @@ telegram.on('callbackQuery', function(msg){
 
     let user = bot.doCheck(telegram, msg.from.id);
 
+    let [cmdName, val1, val2] = msg.data.split(' ');
 
     if(user){
-        let [cmdName, val1, val2] = msg.data.split(' ');
+
         if(cmdName == '/remove'){
             var array = [val1];
             bot.doRemove(telegram, user, array);
@@ -126,6 +127,12 @@ telegram.on('callbackQuery', function(msg){
             bot.doRadius(telegram, user, val1);
         }  else if(cmdName == '/pokemon'){
             bot.doPokemon(telegram, user, val1);
+        }   else if(cmdName == '/reset'){
+            bot.doReset(telegram, user, val1);
+        }
+    } else {
+        if(cmdName == '/start'){
+            bot.doStart(msg.from);
         }
     }
 
