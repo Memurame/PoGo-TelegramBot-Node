@@ -4,7 +4,7 @@
   "description": "PoGo-TelegramBot-Node",
   "main": "bot.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "bot": "node bot.js"
   },
   "repository": {
     "type": "git",
@@ -32,7 +32,7 @@
     "node-localstorage": "^1.3.0",
     "queue": "^4.2.1",
     "rad2deg": "^1.0.0",
-    "telebot": "^1.0.7"
+    "telebot": "^1.2.3"
   },
   "devDependencies": {}
 }

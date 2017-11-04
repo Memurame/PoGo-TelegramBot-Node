@@ -54,14 +54,25 @@ class Bot{
     }
 
     doMenu(telegram, user){
-        var markup = telegram.keyboard(
+        let replyMarkup = telegram.keyboard(
             [
-                [telegram.button('location', 'location'), '/list'],
+                [telegram.button('location', 'location'), '/radius'],
                 ['/raid', '/pokemon']
             ],
             {resize: true});
-        telegram.sendMessage(user.uid, 'Hauptmenü', {markup});
+        let msg = '*Hauptmenü*\n' +
+            'Hier kannst du diverse Einstellungen vornehmen.\n\n' +
+            '*/radius*\nMit diesem Befehl kannst du den Radius der Benachrichtigung ändern.\n' +
+            '*/raid*\n' +
+            'Lege fest ab welchem Lvl du Benachrichtigungen zu Raid erhalten willst.\n' +
+            '*/pokemon*\n' +
+            'Ein- und ausschalten der Pokemon Benachrichtigung';
 
+        telegram.sendMessage(
+            user.uid,
+            msg,
+            {'parse': 'Markdown', 'markup': replyMarkup}
+        );
 
     }
 
@@ -112,18 +123,52 @@ class Bot{
         telegram.sendMessage(uid, 'Dieses Kommando ist Admin Benutzern vorbehalten.');
     }
 
+    doRadius(telegram, user, radius){
+
+
+        let replyMarkup,
+            msg;
+
+        if(radius){
+            if(radius <= 50){
+                user['config']['radius'] = radius;
+                msg = 'Radius von *' + radius + ' Km* gesetzt.';
+            } else {
+                msg = 'Kein gültiger Radius.'
+            }
+
+        } else {
+            msg = '*Radius ändern*\nBestimme einen Radius';
+
+            replyMarkup = telegram.inlineKeyboard([
+                [ telegram.inlineButton('1 Km', {callback: '/radius 1'}) ],
+                [ telegram.inlineButton('2 Km', {callback: '/radius 2'}) ],
+                [ telegram.inlineButton('5 Km', {callback: '/radius 5'}) ],
+                [ telegram.inlineButton('10 Km', {callback: '/radius 10'}) ]
+            ]);
+        }
+        telegram.sendMessage(
+            user.uid,
+            msg,
+            {'parse': 'Markdown', 'markup': replyMarkup}
+        );
+        this.doSave();
+    }
+
     doRaid(telegram, user, status){
         let msg = '';
         let replyMarkup;
         if(status <= 5 || status == "off"){
-            user['config']['raid'] = (status == "off" ? "0" : status);
-            if(user['config']['raid'] == "0"){
-                msg = 'Du erhälst nun keine RAID Benachrichtigung mehr...';
-            } else {
+            user['config']['raid'] = (status == "off" ? 0 : 1);
+            if(user['config']['raid']){
                 msg = 'Du erhälst nun RAID Benachrichtigungen ab Lvl ' + status;
+                user['config']['raid_lvl'] = status
+            } else {
+                msg = 'Du erhälst nun keine RAID Benachrichtigung mehr...';
+
             }
         } else {
-            msg = 'Gib eine Zahl von 1-5 an. Die Zahl bedeutet ab welchem Raid Lvl das du benachrichtigt werden willst. Zum deaktivieren der Raid Benachrichtigungen benutze sie "Off"\n\nBeispiel:\n/raid off\n/raid 3';
+            msg = '*Ändern der Raid Benachrichtigung.*\nAb welchem Level möchtest du eine Benachrichtigung erhalten?';
 
             replyMarkup = telegram.inlineKeyboard([
                 [ telegram.inlineButton('Ab Lvl 1', {callback: '/raid 1'}) ],
@@ -132,6 +177,33 @@ class Bot{
                 [ telegram.inlineButton('Ab Lvl 4', {callback: '/raid 4'}) ],
                 [ telegram.inlineButton('Nur Lvl 5', {callback: '/raid 5'}) ],
                 [ telegram.inlineButton('Keine Raid Benachrichtigung', {callback: '/raid off'}) ]
+            ]);
+        }
+        telegram.sendMessage(
+            user.uid,
+            msg,
+            {'parse': 'Markdown', 'markup': replyMarkup}
+        );
+
+        this.doSave();
+    }
+
+    doPokemon(telegram, user, status){
+        let msg = '';
+        let replyMarkup;
+        if(status == 'on' || status == 'off'){
+            user['config']['pkmn'] = (status == "off" ? 0 : 1);
+            if(user['config']['pkmn']){
+                msg = 'Du erhälst nun Pokemon Benachrichtigungen';
+            } else {
+                msg = 'Du erhälst nun keine Pokemon Benachrichtigung mehr...';
+            }
+        } else {
+            msg = '*Ändern der Pokemon Benachrichtigung.*\nFestlegen ob du über deine definierten Pokemon in der nähe benachrichtigt wedren willst.';
+
+            replyMarkup = telegram.inlineKeyboard([
+                [ telegram.inlineButton('Benachrichtigung AUS', {callback: '/pokemon off'}) ],
+                [ telegram.inlineButton('Benachrichtigung AN', {callback: '/pokemon on'}) ]
             ]);
         }
         telegram.sendMessage(
@@ -208,9 +280,15 @@ class Bot{
         user['config']['lat'] = location.latitude;
         user['config']['lon'] = location.longitude;
 
-        telegram.sendMessage(user.uid,
-            'Dein Standort wurde festgelegt.\nSetze nun einen Radius in Meter:',
-            { ask: 'radius'});
+        let msg = 'Dein Standort wurde festgelegt.\nDer Benachrichtigungsradius beträgt *' + user['config']['radius'] + ' Km*';
+
+        telegram.sendMessage(
+            user.uid,
+            msg,
+            {'parse': 'Markdown'}
+        );
+
+
         this.doSave();
     }
 

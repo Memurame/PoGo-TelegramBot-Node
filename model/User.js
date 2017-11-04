@@ -7,8 +7,8 @@ class User{
         this.config = config || {
                 'lat':'',
                 'lon': '',
-                'radius': '',
-                'active': '1',
+                'radius': 5,
+                'active': 1,
                 'raid': 1,
                 "raid_lvl": 3,
                 'pkmn': 1,

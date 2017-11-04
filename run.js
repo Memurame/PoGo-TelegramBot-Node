@@ -35,7 +35,7 @@ bot.users.forEach(function(user){
             user['config']['active']){
 
             var earth_radius = 6371;
-            var radius = user['config']['radius'] / 1000;
+            var radius = user['config']['radius'];
             var maxLat = user['config']['lat'] + rad2deg(radius/earth_radius);
             var minLat = user['config']['lat'] - rad2deg(radius/earth_radius);
             var maxLon = user['config']['lon'] + rad2deg(radius/earth_radius/Math.cos(deg2rad(user['config']['lat'])));
@@ -157,4 +157,4 @@ bot.users.forEach(function(user){
     }
 
 
-});
+}, config);

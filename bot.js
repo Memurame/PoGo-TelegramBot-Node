@@ -11,13 +11,15 @@ let bot = new Bot();
 let telegram = new TeleBot({
     token: config.API,
     polling: {
-        interval: 1000,
+        interval: 500,
         timeout: 0,
         limit: 100,
         retryTimeout: 5000
-    }
+    },
+    usePlugins: [
+        'askUser'
+    ]
 });
-telegram.use(require('telebot/modules/ask.js'));
 
 /* ---- set telegram commands ------ */
 
@@ -59,16 +61,28 @@ telegram.on('/raid', function(msg){
     if(user) bot.doRaid(telegram, user, status);
 });
 
+telegram.on('/pokemon', function(msg){
+    let user = bot.doCheck(telegram, msg.from.id);
+    let [cmdName, status] = msg.text.split(' ');
+    if(user) bot.doPokemon(telegram, user, status);
+});
+
+telegram.on('/radius', function(msg){
+    let user = bot.doCheck(telegram, msg.from.id);
+    let [cmdName, radius] = msg.text.split(' ');
+    if(user) bot.doRadius(telegram, user, radius);
+});
+
 telegram.on('/reset', function(msg){
     let user = bot.doCheck(telegram, msg.from.id);
     if(user) bot.doResetConfirm(telegram, user);
 });
-
+/*
 telegram.on('ask.reset', function(msg){
     let user = bot.doCheck(telegram, msg.from.id);
     if(user) bot.doReset(telegram, user, msg.text);
 });
-
+*/
 telegram.on('/menu', function(msg){
     let user = bot.doCheck(telegram, msg.from.id);
     if(user) bot.doMenu(telegram, user);
@@ -78,12 +92,12 @@ telegram.on(['location'], function(msg){
     let user = bot.doCheck(telegram, msg.from.id);
     if(user) bot.doLocation(telegram, user, msg.location);
 });
-
+/*
 telegram.on('ask.radius', function(msg){
     let user = bot.doCheck(telegram, msg.from.id);
     if(user) bot.doLocationRadius(telegram, user, msg.text);
 });
-
+*/
 telegram.on('/backup', function(msg){
     if(bot.doAdminCheck(telegram, msg.from.id)){
         bot.doBackup(telegram, msg.from.id);
@@ -112,6 +126,10 @@ telegram.on('callbackQuery', function(msg){
             telegram.sendLocation(msg.from.id, [val1, val2], {'replyToMessage': msg.id});
         } else if(cmdName == '/raid'){
             bot.doRaid(telegram, user, val1);
+        } else if(cmdName == '/radius'){
+            bot.doRadius(telegram, user, val1);
+        }  else if(cmdName == '/pokemon'){
+            bot.doPokemon(telegram, user, val1);
         }
     }
 
