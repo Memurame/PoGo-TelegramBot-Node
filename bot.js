@@ -75,14 +75,10 @@ telegram.on('/radius', function(msg){
 
 telegram.on('/reset', function(msg){
     let user = bot.doCheck(telegram, msg.from.id);
-    if(user) bot.doResetConfirm(telegram, user);
+    let [cmdName, status] = msg.text.split(' ');
+    if(user) bot.doReset(telegram, user, status);
 });
-/*
-telegram.on('ask.reset', function(msg){
-    let user = bot.doCheck(telegram, msg.from.id);
-    if(user) bot.doReset(telegram, user, msg.text);
-});
-*/
+
 telegram.on('/menu', function(msg){
     let user = bot.doCheck(telegram, msg.from.id);
     if(user) bot.doMenu(telegram, user);

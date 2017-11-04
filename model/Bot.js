@@ -263,13 +263,6 @@ class Bot{
         telegram.sendMessage(user.uid, 'Funktion wird noch implementiert...');
     }
 
-    doResetConfirm(telegram, user){
-        telegram.sendMessage(
-            user.uid,
-            'Wirklich alle deine Einstellungen zurücksetzen?\nBestätige mit "Ja"',
-            {ask: 'reset'});
-    }
-
     doReset(telegram, user, answere){
         // Reset der Userconfig implementieren und setzen des active status auf false
 
