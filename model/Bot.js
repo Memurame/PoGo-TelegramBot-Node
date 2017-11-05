@@ -260,7 +260,17 @@ class Bot{
     }
 
     doList(telegram, user){
-        telegram.sendMessage(user.uid, 'Funktion wird noch implementiert...');
+        let msg = '*Pokemon bei denen du eine Benachrichtigung erhälst:*\n';
+        for(var i = 0; i < user['pokemon'].length; i++){
+            msg += (i >= 1 ? ', ' : '');
+            msg += this.pokemon.getName(user['pokemon'][i]['pid']);
+        }
+
+        telegram.sendMessage(
+            user.uid,
+            msg,
+            {'parse': 'Markdown'}
+        );
     }
 
     doReset(telegram, user, reset){
@@ -304,14 +314,6 @@ class Bot{
         );
 
 
-        this.doSave();
-    }
-
-    doLocationRadius(telegram, user, radius){
-        user['config']['radius'] = radius;
-        telegram.sendMessage(user.uid,
-            'Ein Radius von *' + radius + 'm* wurde gesetzt.',
-            {'parse': 'Markdown'});
         this.doSave();
     }
 

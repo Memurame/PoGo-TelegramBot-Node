@@ -88,12 +88,7 @@ telegram.on(['location'], function(msg){
     let user = bot.doCheck(telegram, msg.from.id);
     if(user) bot.doLocation(telegram, user, msg.location);
 });
-/*
-telegram.on('ask.radius', function(msg){
-    let user = bot.doCheck(telegram, msg.from.id);
-    if(user) bot.doLocationRadius(telegram, user, msg.text);
-});
-*/
+
 telegram.on('/backup', function(msg){
     if(bot.doAdminCheck(telegram, msg.from.id)){
         bot.doBackup(telegram, msg.from.id);
@@ -110,6 +105,7 @@ telegram.on('callbackQuery', function(msg){
 
 
     let user = bot.doCheck(telegram, msg.from.id);
+    console.log(msg.from.id);
 
     let [cmdName, val1, val2] = msg.data.split(' ');
 
@@ -118,7 +114,6 @@ telegram.on('callbackQuery', function(msg){
         if(cmdName == '/remove'){
             var array = [val1];
             bot.doRemove(telegram, user, array);
-
         } else if(cmdName == '/getLocation'){
             telegram.sendLocation(msg.from.id, [val1, val2], {'replyToMessage': msg.id});
         } else if(cmdName == '/raid'){
@@ -151,4 +146,4 @@ setInterval(function(){
 }, 10000);
 */
 
-telegram.connect();
+telegram.start();

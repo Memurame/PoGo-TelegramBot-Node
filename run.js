@@ -44,7 +44,7 @@ bot.users.forEach(function(user){
 
             var ajdata = {
                 'mid': user['config']['mid'],
-                'gid': user['config']['gid'],
+                'gid': user['config']['gid'] + 1,
                 'w': minLon,
                 'e': maxLon,
                 'n': maxLat,
