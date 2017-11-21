@@ -1,31 +1,84 @@
 const config = require('../config');
 const Storage = require('../persistence/Storage');
 const Pokemon = require('./Pokemon');
-const User = require('./User');
 const rad2deg = require('rad2deg');
 const deg2rad = require('deg2rad');
 const request = require('request');
 const moment = require('moment');
+const TeleBot = require('telebot');
 
-class Notify {
+class Notify{
 
     constructor(){
-        this.raids = [];
+        //init pokemon
+        this.pokemon = new Pokemon();
 
-        this.data = [];
+        //init telegram
+        this.telegram = new TeleBot({
+            token: config.API
+        });
+
+        this.raids = [];
 
         let storage = new Storage();
         let self = this;
         storage.readRaids(function(data){
             try{ self.raids = data; }catch(err){ }
         });
-
     }
 
-    run(bot, callback) {
 
-        bot.users.forEach(function(user){
-            user = new User(user['uid'], user['firstname'], user['lastname'], user['config'], user['pokemon']);
+    sendPokemon(data, user){
+        var mid = '';
+        var anzPkmn = data.length;
+        //var anzGym = data.gyms.length;
+
+
+        if(anzPkmn > 0 && user['config']['pkmn']){
+            console.log("Anzahl Pkmn = " + anzPkmn);
+            console.log("Anzahl Gym = " + anzGym);
+            for(var i = 0; i< anzPkmn; i++){
+                let pkmn = data.pokemons[i];
+                if(pkmn['eid'] > mid){
+                    mid = pkmn['eid'];
+                }
+                if(user.getPokemonIndex(pkmn.pokemon_id) !== false){
+
+                    let disappear = moment(pkmn['disappear_time']),
+                        disappearFormated = moment.unix(disappear).format("HH:mm:ss"),
+                        now = moment().unix(),
+                        difference = disappear.diff(now),
+                        timeleft = moment.unix(difference).format("mm[m] ss[s]");
+
+
+                    let text = '*' + this.pokemon.getName(pkmn.pokemon_id) + '*\n';
+                    text += 'Verfügbar bis '+ disappearFormated +' ( ' + timeleft + ' )';
+
+
+                    let replyMarkup = this.telegram.inlineKeyboard([
+                        [
+                            this.telegram.inlineButton('Standort', {callback: '/getLocation ' + pkmn.latitude + ' ' + pkmn.longitude}),
+                            this.telegram.inlineButton('Entfernen', {callback: '/remove ' + this.pokemon.getName(pkmn.pokemon_id)})
+                        ]
+                    ]);
+
+                    this.telegram.sendMessage(
+                        user['uid'],
+                        text,
+                        {'parse': 'Markdown', 'markup': replyMarkup}
+                    );
+                }
+            }
+            user['config']['mid'] = mid;
+        }
+    }
+
+    /*
+    run(callback) {
+
+
+        for(var i = 0; i < this.users.length; i++){
+            let user = new User(this.users[i]['uid'], this.users[i]['firstname'], this.users[i]['lastname'], this.users[i]['config'], this.users[i]['pokemon']);
 
             var mid = '';
             var gid = '';
@@ -77,17 +130,24 @@ class Notify {
             }
 
 
+        }
+        this.users.forEach(function(user){
+
+
+
         });
 
     }
+    */
 
+    /*
     doSave(){
         let storage = new Storage();
         storage.saveRaids(this.raids, function(status){
             console.log("Saved");
         });
     }
-
+    */
 }
 
 

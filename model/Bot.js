@@ -2,6 +2,11 @@ const config = require('../config');
 const Storage = require('../persistence/Storage');
 const Pokemon = require('./Pokemon');
 const User = require('./User');
+const Notify = require('./Notify');
+const rad2deg = require('rad2deg');
+const deg2rad = require('deg2rad');
+const request = require('request');
+const moment = require('moment');
 
 class Bot{
 
@@ -308,6 +313,53 @@ class Bot{
             {'parse': 'Markdown'}
         );
 
+    }
+
+    doNotify(telegram) {
+        let notify = new Notify();
+        for (var i = 0; i < this.users.length; i++) {
+            let user = new User(this.users[i]['uid'], this.users[i]['firstname'], this.users[i]['lastname'], this.users[i]['config'], this.users[i]['pokemon']);
+
+
+            if (user['config']['lat'] &&
+                user['config']['lon'] &&
+                user['config']['radius'] &&
+                user['config']['active']) {
+
+                var earth_radius = 6371;
+                var radius = user['config']['radius'];
+                var maxLat = user['config']['lat'] + rad2deg(radius / earth_radius);
+                var minLat = user['config']['lat'] - rad2deg(radius / earth_radius);
+                var maxLon = user['config']['lon'] + rad2deg(radius / earth_radius / Math.cos(deg2rad(user['config']['lat'])));
+                var minLon = user['config']['lon'] - rad2deg(radius / earth_radius / Math.cos(deg2rad(user['config']['lat'])));
+
+
+                var ajdata = {
+                    'mid': user['config']['mid'],
+                    'gid': user['config']['gid'] + 1,
+                    'w': minLon,
+                    'e': maxLon,
+                    'n': maxLat,
+                    's': minLat
+                };
+
+                console.log(ajdata);
+                var options = {
+                    url: 'https://mapdata2.gomap.eu/mnew.php',
+                    method: 'GET',
+                    qs: ajdata
+                };
+
+                request(options, function (error, response, body) {
+                    var data = JSON.parse(body);
+                    notify.sendPokemon(data.pokemons, user);
+
+                }).on('error', function (e) {
+                    console.log("Got error: " + e.message);
+                });
+            }
+
+        }
     }
 
 
