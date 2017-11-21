@@ -74,7 +74,9 @@ class Bot{
             '*/raid*\n' +
             'Lege fest ab welchem Lvl du Benachrichtigungen zu Raid erhalten willst.\n' +
             '*/pokemon*\n' +
-            'Ein- und ausschalten der Pokemon Benachrichtigung';
+            'Ein- und ausschalten der Pokemon Benachrichtigung\n' +
+            '*/list*\n' +
+            'Zeigt eine Liste mit den Pokémon an bei denen du eine Benachrichtigung erhälst.';
 
         telegram.sendMessage(
             user.uid,
@@ -317,7 +319,9 @@ class Bot{
 
     doNotify(telegram) {
         let notify = new Notify();
+
         for (var i = 0; i < this.users.length; i++) {
+            let queue = [];
             let user = new User(this.users[i]['uid'], this.users[i]['firstname'], this.users[i]['lastname'], this.users[i]['config'], this.users[i]['pokemon']);
 
 
@@ -343,16 +347,19 @@ class Bot{
                     's': minLat
                 };
 
-                console.log(ajdata);
+                //console.log(ajdata);
                 var options = {
-                    url: 'https://mapdata2.gomap.eu/mnew.php',
+                    url: config.URL,
                     method: 'GET',
                     qs: ajdata
                 };
 
                 request(options, function (error, response, body) {
                     var data = JSON.parse(body);
-                    notify.sendPokemon(data.pokemons, user);
+                    notify.addPokemonToQueue(data.pokemons, user, queue, function(res){
+                        if(res) notify.sendMessages(telegram, user['uid'], res);
+                        //console.log(res);
+                    });
 
                 }).on('error', function (e) {
                     console.log("Got error: " + e.message);
@@ -360,8 +367,21 @@ class Bot{
             }
 
         }
+
+
     }
 
+    doSendToAll(telegram, text){
+        let notify = new Notify();
+        for (var i = 0; i < this.users.length; i++) {
+            //notify.sendMessages(telegram, this.users[i]['uid'], ['message', text]);
+            telegram.sendMessage(
+                this.users[i]['uid'],
+                '*Nachricht von Admin*\n' + text,
+                {'parse': 'Markdown'}
+            );
+        }
+    }
 
     doBackup(telegram, uid){
         let storage = new Storage();

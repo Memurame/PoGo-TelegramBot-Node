@@ -2,7 +2,6 @@
 exports.API = 'API';
 exports.adminID = YourAdminID;
 exports.locale = 'de';
-exports.authentication = false;
 
 // PokemonGo API
 exports.URL = 'UrlToYourAPI';
@@ -10,3 +9,4 @@ exports.URL = 'UrlToYourAPI';
 // System
 exports.develop = true;
 exports.debug = true;
+exports.loop = 20000;

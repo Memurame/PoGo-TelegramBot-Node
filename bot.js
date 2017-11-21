@@ -24,6 +24,10 @@ let telegram = new TeleBot({
 
 /* ---- set telegram commands ------ */
 
+telegram.on('*', function(msg){
+    console.log(msg.from.id + ' -> ' + msg.text);
+});
+
 telegram.on('/start', function(msg){
     let user = bot.doStart(msg.from);
     bot.displayStartInfo(telegram, user);
@@ -41,13 +45,17 @@ telegram.on('/id', function(msg){
 
 telegram.on('/add', function(msg){
     let user = bot.doCheck(telegram, msg.from.id);
-    let pkmn = msg.text.substr(5).split(',');
+    let pkmn = msg.text.substr(5).split(',').map(function(item) {
+        return item.trim();
+    });
     if(user) bot.doAdd(telegram, user, pkmn);
 });
 
 telegram.on('/remove', function(msg){
     let user = bot.doCheck(telegram, msg.from.id);
-    let pkmn = msg.text.substr(8).split(',');
+    let pkmn = msg.text.substr(8).split(',').map(function(item) {
+        return item.trim();
+    });
     if(user) bot.doRemove(telegram, user, pkmn);
 });
 
@@ -96,6 +104,13 @@ telegram.on('/backup', function(msg){
     }
 });
 
+telegram.on('/send', function(msg){
+    if(bot.doAdminCheck(telegram, msg.from.id)){
+        let text = msg.text.substr(6).trim();
+        bot.doSendToAll(telegram, text);
+    }
+});
+
 telegram.on('/save', function(msg){
     if(bot.doAdminCheck(telegram, msg.from.id)){
         bot.doSave(telegram, msg.from.id);
@@ -106,7 +121,6 @@ telegram.on('callbackQuery', function(msg){
 
 
     let user = bot.doCheck(telegram, msg.from.id);
-    console.log(msg.from.id);
 
     let [cmdName, val1, val2] = msg.data.split(' ');
 
@@ -116,7 +130,7 @@ telegram.on('callbackQuery', function(msg){
             var array = [val1];
             bot.doRemove(telegram, user, array);
         } else if(cmdName == '/getLocation'){
-            telegram.sendLocation(msg.from.id, [val1, val2], {'replyToMessage': msg.id});
+            telegram.sendLocation(msg.from.id, [val1, val2]);
         } else if(cmdName == '/raid'){
             bot.doRaid(telegram, user, val1);
         } else if(cmdName == '/radius'){
@@ -139,13 +153,13 @@ telegram.on('callbackQuery', function(msg){
 
 /* --------------------------------- */
 
-
+//bot.doNotify(telegram);
 setInterval(function(){
 
     bot.doNotify(telegram);
     bot.doSave();
 
 
-}, 5000);
+}, config.loop);
 
 telegram.start();
