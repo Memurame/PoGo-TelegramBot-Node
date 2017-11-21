@@ -1,9 +1,6 @@
 const config = require('../config');
 const Storage = require('../persistence/Storage');
 const Pokemon = require('./Pokemon');
-const rad2deg = require('rad2deg');
-const deg2rad = require('deg2rad');
-const request = require('request');
 const moment = require('moment');
 const TeleBot = require('telebot');
 var Promise = require("bluebird");
@@ -38,10 +35,10 @@ class Notify{
         });
     }
 
-    addPokemonToQueue(data, user, queue, callback){
-        var mid = '';
-        var anzPkmn = data.length;
-        //console.log("Anzahl Pkmn = " + anzPkmn);
+    addPokemonToQueue(data, user, callback){
+        let queue = [],
+            mid = '',
+            anzPkmn = data.length;
         if(anzPkmn > 0 && user['config']['pkmn']){
 
             for(var i = 0; i< anzPkmn; i++){
@@ -72,14 +69,63 @@ class Notify{
         }
     }
 
-    /*
+    addRaidToQueue(data, user, callback){
+        let queue = [],
+            gid = '',
+            anzGym = data.length;
+
+        if(anzGym > 0 && user['config']['raid']){
+
+            for(var i = 0; i< anzGym; i++){
+                let gym = data[i];
+                if (gym['ts'] > gid) {
+                    gid = gym['ts'];
+                }
+
+                let now = moment().unix(),
+                    rb = moment.unix(gym['rb']).format("HH:mm:ss"),
+                    re = moment.unix(gym['re']).format("HH:mm:ss"),
+                    text =  "";
+
+                if(gym['lvl'] &&
+                    gym['lvl'] >= user['config']['raid_lvl'] &&
+                    now <= gym['re']){
+
+                    text =  '*' + gym['name'] + '*\n';
+                    text += 'Level ' + gym['lvl'] + '\n';
+                    if(now > gym['rs'] && now < gym['rb']){
+                        text += 'Raid startet um ' + rb;
+                    }
+                    else if (now > gym['rb'] && now < gym['re']){
+                        text += 'Raid bis ' + re;
+                    }
+
+                    if(gym['rpid']){
+                        text += '\n' + this.pokemon.getName(gym['rpid']) + ' CP: ' + gym['rcp']
+                    }
+
+                    telegram.sendMessage(
+                        user['uid'],
+                        text,
+                        {'parse': 'Markdown'}
+                    );
+                }
+
+            }
+            user['config']['gid'] = gid;
+            var status = (queue.length > 0 ? queue : false);
+            callback(status);
+        }
+    }
+
+
     doSave(){
         let storage = new Storage();
         storage.saveRaids(this.raids, function(status){
             console.log("Saved");
         });
     }
-    */
+
 }
 
 

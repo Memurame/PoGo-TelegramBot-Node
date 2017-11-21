@@ -6,7 +6,6 @@ const Notify = require('./Notify');
 const rad2deg = require('rad2deg');
 const deg2rad = require('deg2rad');
 const request = require('request');
-const moment = require('moment');
 
 class Bot{
 
@@ -321,7 +320,6 @@ class Bot{
         let notify = new Notify();
 
         for (var i = 0; i < this.users.length; i++) {
-            let queue = [];
             let user = new User(this.users[i]['uid'], this.users[i]['firstname'], this.users[i]['lastname'], this.users[i]['config'], this.users[i]['pokemon']);
 
 
@@ -356,11 +354,14 @@ class Bot{
 
                 request(options, function (error, response, body) {
                     var data = JSON.parse(body);
-                    notify.addPokemonToQueue(data.pokemons, user, queue, function(res){
+                    notify.addPokemonToQueue(data.pokemons, user, function(res){
                         if(res) notify.sendMessages(telegram, user['uid'], res);
-                        //console.log(res);
                     });
-
+                    if(user['uid'] == '158876944'){
+                        notify.addRaidToQueue(data.gyms, user, function(res){
+                            if(res) notify.sendMessages(telegram, user['uid'], res);
+                        });
+                    }
                 }).on('error', function (e) {
                     console.log("Got error: " + e.message);
                 });
