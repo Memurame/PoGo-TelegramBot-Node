@@ -7,20 +7,21 @@ class TemporaryStorage{
 
     constructor(){
         this.storageKey = 'pogo-telegram-storage';
+        this.raidKey = 'raid-storage';
     }
 
-    save(data){
+    save(data, file){
         try {
-            localStorage.setItem(this.storageKey, data);
+            localStorage.setItem(file, data);
         }catch(err){
             return '[ERROR]: Cannot save to LocalStorage: ' + err;
         }
         return '[OK]: Successfully saved to LocalStorage';
     }
 
-    read(){
+    read(file){
         try{
-            return localStorage.getItem(this.storageKey);
+            return localStorage.getItem(file);
         }catch(err){
             return '[ERROR]: Cannot read LocalStorage: ' + err;
         }

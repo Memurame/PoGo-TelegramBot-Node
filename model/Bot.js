@@ -20,6 +20,9 @@ class Bot{
         //setup admin array
         this.admins = [];
 
+        //setup raid array
+        this.raid = [];
+
         //get data from localstorage
         let storage = new Storage();
         let self = this;
@@ -86,7 +89,6 @@ class Bot{
 
             this.users.push(user);
         }
-        this.doSave();
         return user;
     }
 
@@ -96,7 +98,6 @@ class Bot{
         ]);
         user['config']['active'] = 0;
         telegram.sendMessage(user.uid, 'Du erhälst nun keine Benachrichtigung mehr...', {markup});
-        this.doSave();
     }
 
     doCheck(telegram, uid){
@@ -152,7 +153,6 @@ class Bot{
             msg,
             {'parse': 'Markdown', 'markup': replyMarkup}
         );
-        this.doSave();
     }
 
     doRaid(telegram, user, status){
@@ -185,7 +185,6 @@ class Bot{
             {'parse': 'Markdown', 'markup': replyMarkup}
         );
 
-        this.doSave();
     }
 
     doPokemon(telegram, user, status){
@@ -212,7 +211,6 @@ class Bot{
             {'parse': 'Markdown', 'markup': replyMarkup}
         );
 
-        this.doSave();
     }
 
     doAdd(telegram, user, pkmnArray){
@@ -235,7 +233,6 @@ class Bot{
 
 
 
-        this.doSave();
     }
 
     doRemove(telegram, user, pkmnArray){
@@ -256,7 +253,6 @@ class Bot{
             telegram.sendMessage(user.uid, msg);
         }
 
-        this.doSave();
     }
 
     doList(telegram, user){
@@ -298,7 +294,6 @@ class Bot{
             {'parse': 'Markdown', 'markup': replyMarkup}
         );
 
-        this.doSave();
     }
 
     doLocation(telegram, user, location){
@@ -313,8 +308,6 @@ class Bot{
             {'parse': 'Markdown'}
         );
 
-
-        this.doSave();
     }
 
 

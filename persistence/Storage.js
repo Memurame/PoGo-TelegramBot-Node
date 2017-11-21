@@ -17,13 +17,13 @@ class Storage{
     saveToLocal(objs, callback){
         let json = JSON.stringify(objs);
         let storage = new TemporaryStorage();
-        let status = storage.save(json);
+        let status = storage.save(json, 'pogo-telegram-storage');
         callback(status);
     }
 
     readFromLocal(callback){
         let storage = new TemporaryStorage();
-        let json = storage.read();
+        let json = storage.read('pogo-telegram-storage');
         let objs = JSON.parse(json);
 
         if(typeof objs == 'Object' && objs.hasOwnProperty(users)){
@@ -33,6 +33,23 @@ class Storage{
             });
             objs.users = users;
         }
+
+        callback(objs);
+    }
+
+    saveRaids(objs, callback){
+        let json = JSON.stringify(objs);
+        let storage = new TemporaryStorage();
+        let status = storage.save(json, 'raid-storage');
+        callback(status);
+    }
+
+    readRaids(callback){
+        let storage = new TemporaryStorage();
+        let json = storage.read('raid-storage');
+        let objs = JSON.parse(json);
+
+
 
         callback(objs);
     }

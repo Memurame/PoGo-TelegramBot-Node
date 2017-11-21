@@ -3,9 +3,13 @@
 const Bot = require('./model/Bot');
 const config = require('./config');
 const TeleBot = require('telebot');
+const Notify = require('./model/Notify');
 
 //init bot
 let bot = new Bot();
+
+//init notify
+let notify = new Notify();
 
 //init telegram
 let telegram = new TeleBot({
@@ -135,15 +139,17 @@ telegram.on('callbackQuery', function(msg){
 });
 
 
+notify.run(bot, function(config){
 
+});
 /* --------------------------------- */
 
-/*
+
 setInterval(function(){
-    console.log('finished running some-script.js');
+    bot.doSave();
+    notify.doSave();
 
 
 }, 10000);
-*/
 
 telegram.start();
