@@ -24,9 +24,6 @@ class Bot{
         //setup admin array
         this.admins = [];
 
-        //setup raid array
-        this.raid = [];
-
         //get data from localstorage
         let storage = new Storage();
         let self = this;
@@ -137,7 +134,7 @@ class Bot{
             msg;
 
         if(radius){
-            if(radius <= 50){
+            if(radius <= 20){
                 user['config']['radius'] = radius;
                 msg = 'Radius von *' + radius + ' Km* gesetzt.';
             } else {
@@ -335,17 +332,16 @@ class Bot{
                 var maxLon = user['config']['lon'] + rad2deg(radius / earth_radius / Math.cos(deg2rad(user['config']['lat'])));
                 var minLon = user['config']['lon'] - rad2deg(radius / earth_radius / Math.cos(deg2rad(user['config']['lat'])));
 
-
+                var gid = user['config']['gid'] + 1;
                 var ajdata = {
                     'mid': user['config']['mid'],
-                    'gid': user['config']['gid'] + 1,
+                    'gid': 0,
                     'w': minLon,
                     'e': maxLon,
                     'n': maxLat,
                     's': minLat
                 };
 
-                //console.log(ajdata);
                 var options = {
                     url: config.URL,
                     method: 'GET',
@@ -357,11 +353,13 @@ class Bot{
                     notify.addPokemonToQueue(data.pokemons, user, function(res){
                         if(res) notify.sendMessages(telegram, user['uid'], res);
                     });
-                    if(user['uid'] == '158876944'){
-                        notify.addRaidToQueue(data.gyms, user, function(res){
-                            if(res) notify.sendMessages(telegram, user['uid'], res);
+                    notify.addRaidToQueue(data.gyms, user, function(res){
+                        notify.prepareRaid(user['uid'], res, function(filtered){
+                            if(filtered) notify.sendMessages(telegram, user['uid'], filtered);
                         });
-                    }
+
+                    });
+
                 }).on('error', function (e) {
                     console.log("Got error: " + e.message);
                 });
@@ -378,7 +376,7 @@ class Bot{
             //notify.sendMessages(telegram, this.users[i]['uid'], ['message', text]);
             telegram.sendMessage(
                 this.users[i]['uid'],
-                '*Nachricht von Admin*\n' + text,
+                '*Nachricht vom Admin*\n' + text,
                 {'parse': 'Markdown'}
             );
         }

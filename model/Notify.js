@@ -16,14 +16,10 @@ class Notify{
             token: config.API
         });
 
-        this.raids = [];
+        this.storage = new Storage();
 
-        let storage = new Storage();
-        let self = this;
-        storage.readRaids(function(data){
-            try{ self.raids = data; }catch(err){ }
-        });
     }
+
     sendMessages(bot, chatId, messages) {
         //console.log('sendMessage: '+chatId+' -> ' + messages);
         return Promise.mapSeries(messages, function (message) {
@@ -69,12 +65,64 @@ class Notify{
         }
     }
 
-    addRaidToQueue(data, user, callback){
+    prepareRaid(user, raids, callback){
         let queue = [],
-            gid = '',
-            anzGym = data.length;
+            now = moment().unix();
+
+        for(var i = 0; i < raids.length; i++){
+            let gym = raids[i],
+                rb = moment.unix(gym['rb']).format("HH:mm:ss"),
+                re = moment.unix(gym['re']).format("HH:mm:ss"),
+                text =  "",
+                send = false;
+
+            if(gym['status'] < 2){
+
+
+                if(now > gym['rs'] && now < gym['rb'] && gym['status'] == 0){
+                    text =  '*' + gym['name'] + '*\n';
+                    text += 'Level ' + gym['lvl'];
+                    text += '\nRaid startet um ' + rb;
+                    text += '\nund endet um ' + re;
+                    gym['status'] = 1;
+                    send = true;
+
+                }
+                else if (now > gym['rb'] && now < gym['re']){
+                    text =  '*' + gym['name'] + ' (Läuft)*\n';
+                    text += 'Level ' + gym['lvl'];
+                    text += '\nRaid endet um ' + re;
+                    gym['status'] = 2;
+                    send = true;
+                }
+
+                if(gym['rpid']){
+                    text += '\n' + this.pokemon.getName(gym['rpid']) + ' CP: ' + gym['rcp']
+                }
+                if(gym['re'] < now) raids.splice(i,1);
+                if(send) queue.push(['message', text]);
+            }
+
+        }
+        console.log(queue);
+        this.doSave(user, raids);
+        var status = (queue.length > 0 ? queue : false);
+        callback(status);
+    }
+
+    addRaidToQueue(data, user, callback){
+        let gid = '',
+            anzGym = data.length,
+            raids = [],
+            now = moment().unix();
+
+        this.storage.readRaids(user['uid'], function(data){
+            try{ raids = data; }catch(err){ }
+        });
 
         if(anzGym > 0 && user['config']['raid']){
+
+
 
             for(var i = 0; i< anzGym; i++){
                 let gym = data[i];
@@ -82,46 +130,41 @@ class Notify{
                     gid = gym['ts'];
                 }
 
-                let now = moment().unix(),
-                    rb = moment.unix(gym['rb']).format("HH:mm:ss"),
-                    re = moment.unix(gym['re']).format("HH:mm:ss"),
-                    text =  "";
-
                 if(gym['lvl'] &&
                     gym['lvl'] >= user['config']['raid_lvl'] &&
                     now <= gym['re']){
 
-                    text =  '*' + gym['name'] + '*\n';
-                    text += 'Level ' + gym['lvl'] + '\n';
-                    if(now > gym['rs'] && now < gym['rb']){
-                        text += 'Raid startet um ' + rb;
+                    let index = raids.map(function(e){ return e['gym_id'];}).indexOf(gym['gym_id']);
+                    if(index == -1){
+                        let raid = {
+                            gym_id: gym['gym_id'],
+                            name: gym['name'],
+                            ts: gym['ts'],
+                            rb: gym['rb'],
+                            rs: gym['rs'],
+                            re: gym['re'],
+                            lvl: gym['lvl'],
+                            rpid: gym['rpid'],
+                            rcp: gym['rcp'],
+                            status: 0
+                        };
+                        raids.push(raid);
+                    } else {
+                        if(gym['rpid']) raids[index]['rpid'] = gym['rpid'];
+                        if(gym['rcp']) raids[index]['rcp'] = gym['rcp'];
                     }
-                    else if (now > gym['rb'] && now < gym['re']){
-                        text += 'Raid bis ' + re;
-                    }
-
-                    if(gym['rpid']){
-                        text += '\n' + this.pokemon.getName(gym['rpid']) + ' CP: ' + gym['rcp']
-                    }
-
-                    telegram.sendMessage(
-                        user['uid'],
-                        text,
-                        {'parse': 'Markdown'}
-                    );
                 }
-
             }
-            user['config']['gid'] = gid;
-            var status = (queue.length > 0 ? queue : false);
-            callback(status);
+            console.log('Anz Raids: '+ raids.length);
+            //user['config']['gid'] = gid;
+            callback(raids);
         }
     }
 
 
-    doSave(){
+    doSave(user, data){
         let storage = new Storage();
-        storage.saveRaids(this.raids, function(status){
+        storage.saveRaids(user, data, function(status){
             console.log("Saved");
         });
     }
