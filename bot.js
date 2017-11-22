@@ -111,10 +111,24 @@ telegram.on('/send', function(msg){
     }
 });
 
+telegram.on('/sendto', function(msg){
+    if(bot.doAdminCheck(telegram, msg.from.id)){
+        let arr = msg.text.split(' '),
+            result = arr.slice(0,2);
+        result.push(arr.slice(2).join(' '));
+        bot.doSendToUser(telegram, result[1], result[2]);
+    }
+});
+
 telegram.on('/save', function(msg){
     if(bot.doAdminCheck(telegram, msg.from.id)){
         bot.doSave(telegram, msg.from.id);
     }
+});
+
+telegram.on('/profile', function(msg){
+    let user = bot.doCheck(telegram, msg.from.id);
+    if(user) bot.doShowConfig(telegram, user);
 });
 
 telegram.on('callbackQuery', function(msg){

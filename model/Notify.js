@@ -52,7 +52,7 @@ class Notify{
 
                     let text = '*' + this.pokemon.getName(pkmn.pokemon_id) + '*\n';
                     text += 'Verfügbar bis '+ disappearFormated +' ( ' + timeleft + ' )';
-                    text += '\n\nIdent: ' + pkmn['eid'];
+                    //text += '\n\nIdent: ' + pkmn['eid'];
 
                     queue.push(['message', text]);
                     queue.push(['location', pkmn.latitude, pkmn.longitude]);
@@ -104,7 +104,6 @@ class Notify{
             }
 
         }
-        console.log(queue);
         this.doSave(user, raids);
         var status = (queue.length > 0 ? queue : false);
         callback(status);
@@ -155,7 +154,6 @@ class Notify{
                     }
                 }
             }
-            console.log('Anz Raids: '+ raids.length);
             //user['config']['gid'] = gid;
             callback(raids);
         }
@@ -165,7 +163,7 @@ class Notify{
     doSave(user, data){
         let storage = new Storage();
         storage.saveRaids(user, data, function(status){
-            console.log("Saved");
+
         });
     }
 

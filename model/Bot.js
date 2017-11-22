@@ -44,11 +44,24 @@ class Bot{
         return foundUser;
     }
 
-    displayStartInfo(telegram, user){
-        telegram.sendMessage(user.uid,
-            "Willkommen zum Pokemon Go Telegram Bot " + user.getName() + "!\n" +
-            "Mit dem Befehl /menu öffnest du das Allgemeine Menu wo du diverse EInstellungen vornehmen kannst."
-        )
+    displayStartInfo(telegram, user) {
+
+        let msg = 'Willkommen zum Pokemon Go Telegram Bot ' + user.getName() + '!\n\n' +
+            'Mit dem Befehl /menu öffnest du das Allgemeine Menu wo du diverse Einstellungen vornehmen kannst.' +
+            'Als erstes solltest du deinen aktueller Standort festlegen, diesen kannst du später beliebig oft ändern.' +
+            'Um deinen Standort zu speichern klicke unten auf "location".' +
+            'So nun läuft dein Bot bereits und du erhälst Raid Benachrichtigungen im Umkreis von 2 Km.' +
+            'Nun musst du nur noch deine Pokémon festlegen, dies kannst du mit dem Befehl /add.\n' +
+            'Hier ein kleines Beispiel:\n' +
+            '/add taubsi\n' +
+            '/add taubsi,glumanda,glurak\n\n' +
+            'Um Pokémon wieder zu entfernen einfach anstelle /add, /remove schreiben\n\n' +
+            'Und nicht vergessen, mit /menu gelangst du immer wieder in deine Einstellungen';
+        telegram.sendMessage(user.uid, msg, {'parse': 'Markdown'});
+
+        this.doMenu(telegram, user);
+
+
     }
 
     displayId(telegram, uid){
@@ -60,19 +73,28 @@ class Bot{
     doMenu(telegram, user){
         let replyMarkup = telegram.keyboard(
             [
-                [telegram.button('location', 'location'), '/radius'],
-                ['/raid', '/pokemon']
+                [telegram.button('location', 'location'), '/radius', '/profile'],
+                ['/raid', '/pokemon', '/list']
             ],
             {resize: true});
         let msg = '*Hauptmenü*\n' +
-            'Hier kannst du diverse Einstellungen vornehmen.\n\n' +
-            '*/radius*\nMit diesem Befehl kannst du den Radius der Benachrichtigung ändern.\n' +
+            'Hier kannst du diverse Einstellungen vornehmen\n\n' +
+            '*/radius*\nMit diesem Befehl kannst du den Radius der Benachrichtigung ändern\n' +
             '*/raid*\n' +
-            'Lege fest ab welchem Lvl du Benachrichtigungen zu Raid erhalten willst.\n' +
+            'Lege fest ab welchem Lvl du Benachrichtigungen zu Raid erhalten willst\n' +
             '*/pokemon*\n' +
             'Ein- und ausschalten der Pokemon Benachrichtigung\n' +
+            '*/profile*\n' +
+            'Zeigt deine Gespeicherten Einstellungen an\n' +
             '*/list*\n' +
-            'Zeigt eine Liste mit den Pokémon an bei denen du eine Benachrichtigung erhälst.';
+            'Zeigt eine Liste mit den Pokémon an bei denen du eine Benachrichtigung erhälst\n\n' +
+            'Mit /add und /remove kannst du deine Pokémon verwalten. '+
+            'Hier ein paar Beispiele\n'+
+            '/add taubsi\n' +
+            '/add taubsi, tauboga\n' +
+            '/remove taubsi, tauboga\n\n' +
+            'Fragen, Ideen oder Verbesserungen?\n' +
+            'https://t.me/PoGoBotDrago';
 
         telegram.sendMessage(
             user.uid,
@@ -80,6 +102,16 @@ class Bot{
             {'parse': 'Markdown', 'markup': replyMarkup}
         );
 
+    }
+
+    doShowConfig(telegram, user){
+        let msg = '*Profile Info*\n'+
+            '*ID:* ' + user['uid'] +
+            '\n*Raid : *' + (user['config']['raid'] == 1 ? 'Eingeschaltet' : 'Ausgeschaltet') +
+            '\n*Raid Level :* ' + user['config']['raid_lvl'] +
+            '\n*Pokemon :* ' + (user['config']['pkmn'] == 1 ? 'Eingeschaltet' : 'Ausgeschaltet') +
+            '\n*Radius :* ' + user['config']['radius'] +' Km';
+        telegram.sendMessage(user.uid, msg, {'parse': 'Markdown'});
     }
 
     doStart(from){
@@ -239,7 +271,6 @@ class Bot{
     }
 
     doRemove(telegram, user, pkmnArray){
-        console.log(pkmnArray);
         for(var i = 0; i < pkmnArray.length; i++){
             let msg = '';
             let pid = this.pokemon.getID(pkmnArray[i]);
@@ -345,20 +376,29 @@ class Bot{
                 var options = {
                     url: config.URL,
                     method: 'GET',
-                    qs: ajdata
+                    qs: ajdata,
+                    timeout: 2500
                 };
-
                 request(options, function (error, response, body) {
-                    var data = JSON.parse(body);
-                    notify.addPokemonToQueue(data.pokemons, user, function(res){
-                        if(res) notify.sendMessages(telegram, user['uid'], res);
-                    });
-                    notify.addRaidToQueue(data.gyms, user, function(res){
-                        notify.prepareRaid(user['uid'], res, function(filtered){
-                            if(filtered) notify.sendMessages(telegram, user['uid'], filtered);
+                    try{
+                        var data = JSON.parse(body);
+                        notify.addPokemonToQueue(data.pokemons, user, function(res){
+                            if(res) notify.sendMessages(telegram, user['uid'], res);
+                        });
+                        notify.addRaidToQueue(data.gyms, user, function(res){
+                            notify.prepareRaid(user['uid'], res, function(filtered){
+                                if(filtered) notify.sendMessages(telegram, user['uid'], filtered);
+                            });
+
                         });
 
-                    });
+                        notify.doSave("test", data);
+                    } catch (e) {
+                        console.log("REQUEST JSON ERROR\n" +
+                            "FROM: " + user['uid'] + "\n" +
+                            response.request.uri.query);
+                    }
+
 
                 }).on('error', function (e) {
                     console.log("Got error: " + e.message);
@@ -366,7 +406,6 @@ class Bot{
             }
 
         }
-
 
     }
 
@@ -380,6 +419,14 @@ class Bot{
                 {'parse': 'Markdown'}
             );
         }
+    }
+
+    doSendToUser(telegram, user, text){
+        telegram.sendMessage(
+            user,
+            '*Nachricht vom Admin*\n' + text,
+            {'parse': 'Markdown'}
+        );
     }
 
     doBackup(telegram, uid){

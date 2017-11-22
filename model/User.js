@@ -7,10 +7,10 @@ class User{
         this.config = config || {
                 'lat':'',
                 'lon': '',
-                'radius': 5,
+                'radius': 2,
                 'active': 1,
                 'raid': 1,
-                "raid_lvl": 3,
+                "raid_lvl": 1,
                 'pkmn': 1,
                 'mid': 0,
                 'gid': 0};
@@ -19,7 +19,6 @@ class User{
 
 
     existsPokemon(pid){
-        console.log("pid: " + pid);
         let exists = false;
         if(this.pokemon && this.pokemon.length){
             this.pokemon.forEach(function (pkmn, index) {
@@ -66,7 +65,6 @@ class User{
 
     removePokemon(pid){
         let index = this.getPokemonIndex(pid);
-        console.log("Pokemon remove index: " + index);
         if(index !== false){
             this.pokemon.splice(index,1);
             return true;
