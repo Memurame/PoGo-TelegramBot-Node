@@ -12,7 +12,7 @@ let bot = new Bot();
 let telegram = new TeleBot({
     token: config.API,
     polling: {
-        interval: 500,
+        interval: 1000,
         timeout: 0,
         limit: 100,
         retryTimeout: 5000
@@ -22,6 +22,8 @@ let telegram = new TeleBot({
     ]
 });
 
+
+
 /* ---- set telegram commands ------ */
 
 telegram.on('*', function(msg){
@@ -29,8 +31,7 @@ telegram.on('*', function(msg){
 });
 
 telegram.on('/start', function(msg){
-    let user = bot.doStart(msg.from);
-    bot.displayStartInfo(telegram, user);
+    bot.doStart(telegram, msg.from);
 });
 telegram.on('/stop', function(msg){
     let user = bot.doCheck(telegram, msg.from.id);
@@ -39,13 +40,9 @@ telegram.on('/stop', function(msg){
     }
 });
 
-telegram.on('/id', function(msg){
-    bot.displayId(telegram, msg.from.id);
-});
-
 telegram.on('/add', function(msg){
     let user = bot.doCheck(telegram, msg.from.id);
-    let pkmn = msg.text.substr(5).split(',').map(function(item) {
+    let pkmn = msg.text.substr(6).split(',').map(function(item) {
         return item.trim();
     });
     if(user) bot.doAdd(telegram, user, pkmn);
@@ -111,12 +108,31 @@ telegram.on('/send', function(msg){
     }
 });
 
+telegram.on('/status', function(msg){
+    if(bot.doAdminCheck(telegram, msg.from.id)){
+        bot.doShowStatus(telegram, msg.from.id);
+    }
+});
+
+telegram.on('/admin', function(msg){
+    if(bot.doAdminCheck(telegram, msg.from.id)){
+        bot.doAdminMenu(telegram, msg.from.id);
+    }
+});
+
 telegram.on('/sendto', function(msg){
     if(bot.doAdminCheck(telegram, msg.from.id)){
         let arr = msg.text.split(' '),
             result = arr.slice(0,2);
         result.push(arr.slice(2).join(' '));
         bot.doSendToUser(telegram, result[1], result[2]);
+    }
+});
+
+telegram.on('/server', function(msg){
+    if(bot.doAdminCheck(telegram, msg.from.id)){
+        let [cmdName, status] = msg.text.split(' ');
+        bot.doServerStatus(telegram, status, msg.from.id);
     }
 });
 
@@ -133,34 +149,35 @@ telegram.on('/profile', function(msg){
 
 telegram.on('callbackQuery', function(msg){
 
-
     let user = bot.doCheck(telegram, msg.from.id);
 
     let [cmdName, val1, val2] = msg.data.split(' ');
 
-    if(user){
 
-        if(cmdName == '/remove'){
-            var array = [val1];
-            bot.doRemove(telegram, user, array);
-        } else if(cmdName == '/getLocation'){
-            telegram.sendLocation(msg.from.id, [val1, val2]);
-        } else if(cmdName == '/raid'){
-            bot.doRaid(telegram, user, val1);
-        } else if(cmdName == '/radius'){
-            bot.doRadius(telegram, user, val1);
-        }  else if(cmdName == '/pokemon'){
-            bot.doPokemon(telegram, user, val1);
-        }   else if(cmdName == '/reset'){
-            bot.doReset(telegram, user, val1);
-        }
-    } else {
-        if(cmdName == '/start'){
-            bot.doStart(msg.from);
-        }
+    if(cmdName == '/remove'){
+        var array = [val1];
+        bot.doRemove(telegram, user, array);
+    } else if(cmdName == '/getLocation'){
+        telegram.sendLocation(msg.from.id, [val1, val2]);
+    } else if(cmdName == '/raid'){
+        bot.doRaid(telegram, user, val1);
+    } else if(cmdName == '/radius'){
+        bot.doRadius(telegram, user, val1);
+    } else if(cmdName == '/pokemon'){
+        bot.doPokemon(telegram, user, val1);
+    } else if(cmdName == '/reset'){
+        bot.doReset(telegram, user, val1);
+    } else if(cmdName == '/start'){
+        bot.doStart(telegram, msg.from);
     }
 
 
+
+});
+
+telegram.on('inlineQuery', function(msg){
+
+   console.log('inlineQuery');
 });
 
 
@@ -172,7 +189,7 @@ telegram.on('callbackQuery', function(msg){
 
 setInterval(function(){
 
-    bot.doServerRequest(telegram);
+    if(bot.status) bot.doServerRequest(telegram);
     bot.doSave();
 
 

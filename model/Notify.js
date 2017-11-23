@@ -13,11 +13,6 @@ class Notify{
         //init pokemon
         this.pokemon = new Pokemon();
 
-        //init telegram
-        this.telegram = new TeleBot({
-            token: config.API
-        });
-
         this.storage = new Storage();
 
     }
@@ -38,19 +33,18 @@ class Notify{
             mid = '',
             anzPkmn = data.length;
 
-        if(anzPkmn > 0 && user['config']['pkmn']){
-
+        if(anzPkmn > 0){
             for(var i = 0; i< anzPkmn; i++){
                 let pkmn = data[i];
-                if(pkmn['eid'] > user['config']['mid']){
-                    mid = pkmn['eid'];
+                if(pkmn.eid > user.config.mid){
+                    mid = pkmn.eid;
 
                     var earth_radius = 6371;
-                    var radius = user['config']['radius'];
-                    var maxLat = user['config']['lat'] + rad2deg(radius / earth_radius);
-                    var minLat = user['config']['lat'] - rad2deg(radius / earth_radius);
-                    var maxLon = user['config']['lon'] + rad2deg(radius / earth_radius / Math.cos(deg2rad(user['config']['lat'])));
-                    var minLon = user['config']['lon'] - rad2deg(radius / earth_radius / Math.cos(deg2rad(user['config']['lat'])));
+                    var radius = user.config.radius;
+                    var maxLat = user.config.lat + rad2deg(radius / earth_radius);
+                    var minLat = user.config.lat - rad2deg(radius / earth_radius);
+                    var maxLon = user.config.lon + rad2deg(radius / earth_radius / Math.cos(deg2rad(user.config.lat)));
+                    var minLon = user.config.lon - rad2deg(radius / earth_radius / Math.cos(deg2rad(user.config.lat)));
 
 
                     if(pkmn.latitude < maxLat && pkmn.latitude > minLat && pkmn.longitude < maxLon && pkmn.longitude > minLon){
@@ -73,7 +67,7 @@ class Notify{
 
                 }
             }
-            if(mid) user['config']['mid'] = mid + 1;
+            if(mid) user.config.mid = mid + 1;
             var status = (queue.length > 0 ? queue : false);
             callback(status);
         }
@@ -90,32 +84,31 @@ class Notify{
                 text =  "",
                 send = false;
 
-            if(gym['status'] < 2){
+            if(gym.status < 2){
 
-
-                if(now > gym['rs'] && now < gym['rb'] && gym['status'] == 0){
-                    text =  '*' + gym['name'] + '*\n';
-                    text += 'Level ' + gym['lvl'];
+                if(now >= gym.rs && now < gym.rb && gym.status == 0){
+                    text =  '*' + gym.name + '*\n';
+                    text += 'Level ' + gym.lvl;
                     text += '\nRaid startet um ' + rb;
                     text += '\nund endet um ' + re;
-                    gym['status'] = 1;
+                    gym.status = 1;
                     send = true;
 
                 }
-                else if (now > gym['rb'] && now < gym['re']){
-                    text =  '*' + gym['name'] + ' (Läuft)*\n';
-                    text += 'Level ' + gym['lvl'];
+                else if (now >= gym.rb && now < gym.re){
+                    text =  '*' + gym.name + ' (Läuft)*\n';
+                    text += 'Level ' + gym.lvl;
                     text += '\nRaid endet um ' + re;
-                    gym['status'] = 2;
+                    gym.status = 2;
                     send = true;
                 }
 
-                if(gym['rpid']){
-                    text += '\n' + this.pokemon.getName(gym['rpid']) + ' CP: ' + gym['rcp']
+                if(gym.rpid){
+                    text += '\n' + this.pokemon.getName(gym.rpid) + ' CP: ' + gym.rcp
                 }
-                if(gym['re'] < now) raids.splice(i,1);
                 if(send) queue.push(['message', text]);
             }
+            if(gym.re < now) raids.splice(i,1);
 
         }
         this.doSave(user, raids);
@@ -129,67 +122,66 @@ class Notify{
             raids = [],
             now = moment().unix();
 
-        this.storage.readRaids(user['uid'], function(data){
+        this.storage.readRaids(user.uid, function(data){
             try{ raids = data; }catch(err){ }
         });
 
-        if(anzGym > 0 && user['config']['raid']){
-
-
+        if(anzGym > 0){
 
             for(var i = 0; i< anzGym; i++){
                 let gym = data[i];
-                if (gym['ts'] > gid) {
-                    gid = gym['ts'];
+
+                var earth_radius = 6371;
+                var radius = user.config.radius;
+                var maxLat = user.config.lat + rad2deg(radius / earth_radius);
+                var minLat = user.config.lat - rad2deg(radius / earth_radius);
+                var maxLon = user.config.lon + rad2deg(radius / earth_radius / Math.cos(deg2rad(user.config.lat)));
+                var minLon = user.config.lon - rad2deg(radius / earth_radius / Math.cos(deg2rad(user.config.lat)));
 
 
-                    var earth_radius = 6371;
-                    var radius = user['config']['radius'];
-                    var maxLat = user['config']['lat'] + rad2deg(radius / earth_radius);
-                    var minLat = user['config']['lat'] - rad2deg(radius / earth_radius);
-                    var maxLon = user['config']['lon'] + rad2deg(radius / earth_radius / Math.cos(deg2rad(user['config']['lat'])));
-                    var minLon = user['config']['lon'] - rad2deg(radius / earth_radius / Math.cos(deg2rad(user['config']['lat'])));
+                if(gym.latitude < maxLat && gym.latitude > minLat && gym.longitude < maxLon && gym.longitude > minLon) {
 
+                    if (gym.lvl &&
+                        gym.lvl >= user.config.raid_lvl &&
+                        now <= gym.re) {
 
-                    if(gym.latitude < maxLat && gym.latitude > minLat && gym.longitude < maxLon && gym.longitude > minLon) {
+                        let index = raids.map(function (e) {
+                            return e.gym_id;
+                        }).indexOf(gym.gym_id);
 
-                        if (gym['lvl'] &&
-                            gym['lvl'] >= user['config']['raid_lvl'] &&
-                            now <= gym['re']) {
-
-                            let index = raids.map(function (e) {
-                                return e['gym_id'];
-                            }).indexOf(gym['gym_id']);
-                            if (index == -1) {
-                                let raid = {
-                                    gym_id: gym['gym_id'],
-                                    name: gym['name'],
-                                    ts: gym['ts'],
-                                    rb: gym['rb'],
-                                    rs: gym['rs'],
-                                    re: gym['re'],
-                                    lvl: gym['lvl'],
-                                    rpid: gym['rpid'],
-                                    rcp: gym['rcp'],
-                                    status: 0
-                                };
-                                raids.push(raid);
-                            } else {
-                                if (gym['rpid']) raids[index]['rpid'] = gym['rpid'];
-                                if (gym['rcp']) raids[index]['rcp'] = gym['rcp'];
-                            }
+                        if(index >= 0 && raids[index]['re'] < now){
+                            raids.splice(index,1);
+                            index = -1;
+                        }
+                        if (index == -1) {
+                            let raid = {
+                                gym_id: gym.gym_id,
+                                name: gym.name,
+                                ts: gym.ts,
+                                rb: gym.rb,
+                                rs: gym.rs,
+                                re: gym.re,
+                                lvl: gym.lvl,
+                                rpid: gym.rpid,
+                                rcp: gym.rcp,
+                                status: 0
+                            };
+                            raids.push(raid);
+                        } else {
+                            if (gym.rpid) raids[index].rpid = gym.rpid;
+                            if (gym.rcp) raids[index].rcp = gym.rcp;
                         }
                     }
-
-
-
-
-
                 }
 
 
+
+
+
+
+
+
             }
-            //user['config']['gid'] = gid;
             callback(raids);
         }
     }
