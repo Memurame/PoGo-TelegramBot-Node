@@ -167,10 +167,12 @@ telegram.on('callbackQuery', function(msg){
 
 /* --------------------------------- */
 
-//bot.doNotify(telegram);
+
+
+
 setInterval(function(){
 
-    bot.doNotify(telegram);
+    bot.doServerRequest(telegram);
     bot.doSave();
 
 

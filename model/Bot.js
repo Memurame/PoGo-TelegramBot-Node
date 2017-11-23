@@ -21,6 +21,9 @@ class Bot{
         //setup user array
         this.users = [];
 
+        // server request
+        this.data = null;
+
         //setup admin array
         this.admins = [];
 
@@ -344,68 +347,61 @@ class Bot{
 
     }
 
-    doNotify(telegram) {
+    doServerRequest(telegram){
+
         let notify = new Notify();
 
-        for (var i = 0; i < this.users.length; i++) {
-            let user = new User(this.users[i]['uid'], this.users[i]['firstname'], this.users[i]['lastname'], this.users[i]['config'], this.users[i]['pokemon']);
+        var earth_radius = 6371;
+        var radius = config.radius;
+        var maxLat = config.lat + rad2deg(radius / earth_radius);
+        var minLat = config.lat - rad2deg(radius / earth_radius);
+        var maxLon = config.lon + rad2deg(radius / earth_radius / Math.cos(deg2rad(config.lat)));
+        var minLon = config.lon - rad2deg(radius / earth_radius / Math.cos(deg2rad(config.lat)));
+
+        var ajdata = {
+            'mid': 0,
+            'gid': 0,
+            'w': minLon,
+            'e': maxLon,
+            'n': maxLat,
+            's': minLat
+        };
+
+        var options = {
+            url: config.URL,
+            method: 'GET',
+            qs: ajdata,
+            timeout: 10000
+        };
+        let self = this;
+        request(options, function (error, response, body) {
 
 
-            if (user['config']['lat'] &&
-                user['config']['lon'] &&
-                user['config']['radius'] &&
-                user['config']['active']) {
 
-                var earth_radius = 6371;
-                var radius = user['config']['radius'];
-                var maxLat = user['config']['lat'] + rad2deg(radius / earth_radius);
-                var minLat = user['config']['lat'] - rad2deg(radius / earth_radius);
-                var maxLon = user['config']['lon'] + rad2deg(radius / earth_radius / Math.cos(deg2rad(user['config']['lat'])));
-                var minLon = user['config']['lon'] - rad2deg(radius / earth_radius / Math.cos(deg2rad(user['config']['lat'])));
-
-                var gid = user['config']['gid'] + 1;
-                var ajdata = {
-                    'mid': user['config']['mid'],
-                    'gid': 0,
-                    'w': minLon,
-                    'e': maxLon,
-                    'n': maxLat,
-                    's': minLat
-                };
-
-                var options = {
-                    url: config.URL,
-                    method: 'GET',
-                    qs: ajdata,
-                    timeout: 2500
-                };
-                request(options, function (error, response, body) {
-                    try{
-                        var data = JSON.parse(body);
-                        notify.addPokemonToQueue(data.pokemons, user, function(res){
-                            if(res) notify.sendMessages(telegram, user['uid'], res);
-                        });
-                        notify.addRaidToQueue(data.gyms, user, function(res){
-                            notify.prepareRaid(user['uid'], res, function(filtered){
-                                if(filtered) notify.sendMessages(telegram, user['uid'], filtered);
-                            });
-
+            try{
+                self.data = JSON.parse(body);
+                for (var i = 0; i < self.users.length; i++) {
+                    let user = new User(self.users[i]['uid'], self.users[i]['firstname'], self.users[i]['lastname'], self.users[i]['config'], self.users[i]['pokemon']);
+                    notify.addPokemonToQueue(self.data.pokemons, user, function (res) {
+                        if(res) notify.sendMessages(telegram, user['uid'], res);
+                    });
+                    notify.addRaidToQueue(self.data.gyms, user, function(res){
+                        notify.prepareRaid(user['uid'], res, function(filtered){
+                            if(filtered) notify.sendMessages(telegram, user['uid'], filtered);
                         });
 
-                        notify.doSave("test", data);
-                    } catch (e) {
-                        console.log("REQUEST JSON ERROR\n" +
-                            "FROM: " + user['uid'] + "\n" +
-                            response.request.uri.query);
-                    }
+                    });
+                }
 
-
-                }).on('error', function (e) {
-                    console.log("Got error: " + e.message);
-                });
+            } catch (e) {
+                console.log("REQUEST JSON ERROR\n" +
+                    response.request.uri.query);
             }
 
-        }
+
+        }).on('error', function (e) {
+            console.log("Got error: " + e.message);
+        });
 
     }
 
