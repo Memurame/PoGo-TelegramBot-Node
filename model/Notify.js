@@ -84,7 +84,7 @@ class Notify{
                 text =  "",
                 send = false;
 
-            if(gym.status < 2){
+            if(gym.status < 2 && gym.lvl >= user.config.raid_lvl ){
 
                 if(now >= gym.rs && now < gym.rb && gym.status == 0){
                     text =  '*' + gym.name + '*\n';
@@ -141,9 +141,7 @@ class Notify{
 
                 if(gym.latitude < maxLat && gym.latitude > minLat && gym.longitude < maxLon && gym.longitude > minLon) {
 
-                    if (gym.lvl &&
-                        gym.lvl >= user.config.raid_lvl &&
-                        now <= gym.re) {
+                    if (gym.lvl && now <= gym.re) {
 
                         let index = raids.map(function (e) {
                             return e.gym_id;

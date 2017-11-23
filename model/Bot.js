@@ -438,6 +438,9 @@ class Bot{
 
             try{
                 self.data = JSON.parse(body);
+                console.log('Anz Pokemon: ' + self.data.pokemons.length);
+                console.log('Anz Arena: ' + self.data.gyms.length);
+
                 for (var i = 0; i < self.users.length; i++) {
                     let user = new User(self.users[i].uid, self.users[i].firstname, self.users[i].lastname, self.users[i].config, self.users[i].pokemon);
                     if(config.pokemon && user.config.pkmn){
