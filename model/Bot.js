@@ -53,6 +53,12 @@ class Bot{
 
     displayStartInfo(telegram, user) {
 
+        let replyMarkup = telegram.keyboard(
+            [
+                [telegram.button('location', 'location')]
+            ],
+            {resize: true});
+
         let msg = 'Willkommen zum Pokemon Go Telegram Bot ' + user.getName() + '!\n\n' +
             'Mit dem Befehl /menu öffnest du das Allgemeine Menu wo du diverse Einstellungen vornehmen kannst.' +
             'Als erstes solltest du deinen aktueller Standort festlegen, diesen kannst du später beliebig oft ändern.' +
@@ -63,10 +69,10 @@ class Bot{
             '/add taubsi\n' +
             '/add taubsi,glumanda,glurak\n\n' +
             'Um Pokémon wieder zu entfernen einfach anstelle /add, /remove schreiben\n\n' +
-            'Und nicht vergessen, mit /menu gelangst du immer wieder in deine Einstellungen';
-        telegram.sendMessage(user.uid, msg, {'parse': 'Markdown'});
-
-        this.doMenu(telegram, user);
+            'Und nicht vergessen, mit /help oder /menu gelangst du immer wieder ins Menü\n\n'+
+            'Fragen, Ideen oder Verbesserungen?\n' +
+            'https://t.me/PoGoBotDrago';
+        telegram.sendMessage(user.uid, msg, {'parse': 'Markdown', 'markup': replyMarkup});
 
 
     }
@@ -78,22 +84,20 @@ class Bot{
                 ['/raid', '/pokemon', '/list']
             ],
             {resize: true});
-        let msg = '*Hauptmenü*\n' +
+        let msg = '*Hilfe*\n' +
             'Hier kannst du diverse Einstellungen vornehmen\n\n' +
-            '*/radius*\nMit diesem Befehl kannst du den Radius der Benachrichtigung ändern\n' +
+            '*/radius*\n' +
+            'Mit diesem Befehl kannst du den Radius der Benachrichtigung ändern\n' +
             '*/raid*\n' +
             'Lege fest ab welchem Lvl du Benachrichtigungen zu Raid erhalten willst\n' +
             '*/pokemon*\n' +
             'Ein- und ausschalten der Pokemon Benachrichtigung\n' +
             '*/profile*\n' +
             'Zeigt deine Gespeicherten Einstellungen an\n' +
+            '*/reset*\n' +
+            'Löscht dein Account und alle Einstellungen endgültig\n' +
             '*/list*\n' +
             'Zeigt eine Liste mit den Pokémon an bei denen du eine Benachrichtigung erhälst\n\n' +
-            'Mit /add und /remove kannst du deine Pokémon verwalten. '+
-            'Hier ein paar Beispiele\n'+
-            '/add taubsi\n' +
-            '/add taubsi, tauboga\n' +
-            '/remove taubsi, tauboga\n\n' +
             'Fragen, Ideen oder Verbesserungen?\n' +
             'https://t.me/PoGoBotDrago';
 
@@ -157,6 +161,7 @@ class Bot{
             telegram.sendMessage(from.id, 'Der Bot ist bereits aktiviert.');
         } else {
             let user = new User(from.id, from.first_name, from.last_name);
+            user.addDefaultPokemon(1);
             this.users.push(user);
             this.displayStartInfo(telegram, user);
             this.doSendToAdmins(telegram, 'Neuer User: ' + from.id);
@@ -171,13 +176,13 @@ class Bot{
         telegram.sendMessage(user.uid, 'Du erhälst nun keine Benachrichtigung mehr...', {markup});
     }
 
-    doCheck(telegram, uid){
+    doCheck(telegram, uid, notify = true){
         let user = this.findUser(uid);
         if(user){
             user = new User(user.uid, user.firstname, user.lastname, user.config, user.pokemon);
             return user;
         }
-        this.doWarn(telegram, uid);
+        if(notify) this.doWarn(telegram, uid);
         return false;
     }
 
@@ -306,43 +311,73 @@ class Bot{
     }
 
     doAdd(telegram, user, pkmnArray){
-        //console.log(pkmnArray.length);
-        for(var i = 0; i < pkmnArray.length; i++){
-            let msg = '';
-            let pid = this.pokemon.getID(pkmnArray[i]);
-            if(pid){
-                let pokemon = user.addPokemon(pid);
-                if(pokemon){
-                    msg = this.pokemon.getName(pid) + ' wurde hinzugefügt';
-                } else {
-                    msg = this.pokemon.getName(pid) + ' bereits vorhanden!';
+        let msg = '';
+        switch(pkmnArray[0]){
+            case 'default':
+                user.addDefaultPokemon(1);
+                msg = 'Standart Pokémon hinzugefügt';
+                break;
+            case 'rare':
+                user.addDefaultPokemon(2);
+                msg = 'Seltene Pokémon hinzugefügt';
+                break;
+            case '':
+                msg = '*Pokémon hinzufügen*\n'+
+                    'Hier ein paar Beispiele\n'+
+                    '/add taubsi\n' +
+                    '/add taubsi, tauboga\n\n' +
+                    'Ebenfalls kannst du auch unsere vordefinierte Liste verwenden.\n\n' +
+                    '*/add default*\n'+
+                    'Dies fügt die von uns definierten Pokémon hinzu\n';
+                break;
+            default:
+                for(var i = 0; i < pkmnArray.length; i++){
+                    let pid = this.pokemon.getID(pkmnArray[i]);
+                    if(pid){
+                        let pokemon = user.addPokemon(pid);
+                        if(pokemon){
+                            msg += '\u{2714}' + this.pokemon.getName(pid) + ' wurde hinzugefügt\n';
+                        } else {
+                            msg += '\u{2714}' + this.pokemon.getName(pid) + ' bereits vorhanden\n';
+                        }
+                    } else {
+                        msg += '\u{2716}' + pkmnArray[i] + ' existiert nicht\n';
+                    }
                 }
-            } else {
-                msg = pkmnArray[i] + ' existiert nicht!';
-            }
-            telegram.sendMessage(user.uid, msg);
         }
-
-
-
+        telegram.sendMessage(user.uid, msg, {'parse': 'Markdown'});
     }
 
     doRemove(telegram, user, pkmnArray){
-        for(var i = 0; i < pkmnArray.length; i++){
-            let msg = '';
-            let pid = this.pokemon.getID(pkmnArray[i]);
-            if(pid){
-                if(user.removePokemon(pid)){
-                    msg = this.pokemon.getName(pid) + ' wurde entfernt.';
-                } else {
-                    msg = this.pokemon.getName(pid) + ' nicht definiert.';
+        let msg = '';
+        switch(pkmnArray[0]){
+            case 'all':
+                user.removeAllPokemon();
+                msg = 'Alle Pokémon aus der Liste entfernt.';
+                break;
+            case '':
+                msg = '*Pokémon entfernen*\n'+
+                    'Hier ein paar Beispiele\n'+
+                    '/remove taubsi\n' +
+                    '/remove taubsi, tauboga\n\n' +
+                    'Mit */remove all* kannst du deine Liste leeren.\n';
+                break;
+            default:
+                for(var i = 0; i < pkmnArray.length; i++){
+                    let pid = this.pokemon.getID(pkmnArray[i]);
+                    if(pid){
+                        if(user.removePokemon(pid)){
+                            msg += '\u{2714}' + this.pokemon.getName(pid) + ' wurde entfernt\n';
+                        } else {
+                            //msg += '\u{2716}' + this.pokemon.getName(pid) + ' nicht definiert\n';
+                        }
+                    } else {
+                        msg += '\u{2716}' + pkmnArray[i] + ' existiert nicht\n'
+                    }
                 }
-            } else {
-                msg = pkmnArray[i] + ' existiert nicht'
-            }
-
-            telegram.sendMessage(user.uid, msg);
         }
+        telegram.sendMessage(user.uid, msg, {'parse': 'Markdown'});
+
 
     }
 
@@ -365,6 +400,7 @@ class Bot{
 
         let msg = '';
         let replyMarkup;
+        let storage = new Storage();
         if(reset == 'yes'){
             msg = 'Dein Profil wurde komplet gelöscht.\nDu kannst unten auf den Button klicken um ein neues zu erstellen.';
 
@@ -373,7 +409,9 @@ class Bot{
             }).indexOf(user.uid);
 
             this.doSendToAdmins(telegram, 'Deleted User: ' + user.uid);
+            storage.removeRaid(user.uid);
             this.users.splice(index,1);
+
 
             replyMarkup = telegram.inlineKeyboard([
                 [ telegram.inlineButton('Neues Profil erstellen', {callback: '/start'}) ]
@@ -435,12 +473,9 @@ class Bot{
         };
         let self = this;
         request(options, function (error, response, body) {
+            self.data = JSON.parse(body);
 
             try{
-                self.data = JSON.parse(body);
-                console.log('Anz Pokemon: ' + self.data.pokemons.length);
-                console.log('Anz Arena: ' + self.data.gyms.length);
-
                 for (var i = 0; i < self.users.length; i++) {
                     let user = new User(self.users[i].uid, self.users[i].firstname, self.users[i].lastname, self.users[i].config, self.users[i].pokemon);
                     if(config.pokemon && user.config.pkmn){
@@ -450,7 +485,7 @@ class Bot{
                     }
                     if(config.raid && user.config.raid){
                         notify.addRaidToQueue(self.data.gyms, user, function(res){
-                            notify.prepareRaid(user.uid, res, function(filtered){
+                            notify.prepareRaid(user, res, function(filtered){
                                 if(filtered) notify.sendMessages(telegram, user.uid, filtered);
                             });
 
@@ -460,7 +495,7 @@ class Bot{
                 }
             } catch (e) {
                 console.log("REQUEST JSON ERROR\n" +
-                    response.request.uri.query);
+                    e);
                 self.doSendToAdmins(telegram, 'Request error!');
 
             }
@@ -475,7 +510,7 @@ class Bot{
     doSendToAll(telegram, text){
         for (var i = 0; i < this.users.length; i++) {
             telegram.sendMessage(
-                this.users[i].id,
+                this.users[i].uid,
                 '*Nachricht vom Admin*\n' + text,
                 {'parse': 'Markdown'}
             );

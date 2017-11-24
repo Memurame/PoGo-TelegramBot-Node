@@ -56,6 +56,11 @@ class Storage{
         callback(objs);
     }
 
+    removeRaid(uid){
+        let storage = new TemporaryStorage();
+        storage.remove('raid-storage-' + uid);
+    }
+
 }
 
 module.exports = Storage;

@@ -42,7 +42,7 @@ telegram.on('/stop', function(msg){
 
 telegram.on('/add', function(msg){
     let user = bot.doCheck(telegram, msg.from.id);
-    let pkmn = msg.text.substr(6).split(',').map(function(item) {
+    let pkmn = msg.text.substr(5).split(',').map(function(item) {
         return item.trim();
     });
     if(user) bot.doAdd(telegram, user, pkmn);
@@ -85,7 +85,7 @@ telegram.on('/reset', function(msg){
     if(user) bot.doReset(telegram, user, reset);
 });
 
-telegram.on('/menu', function(msg){
+telegram.on(['/menu', '/help'], function(msg){
     let user = bot.doCheck(telegram, msg.from.id);
     if(user) bot.doMenu(telegram, user);
 });
@@ -149,27 +149,31 @@ telegram.on('/profile', function(msg){
 
 telegram.on('callbackQuery', function(msg){
 
-    let user = bot.doCheck(telegram, msg.from.id);
+    let user = bot.doCheck(telegram, msg.from.id, false);
 
     let [cmdName, val1, val2] = msg.data.split(' ');
 
-
-    if(cmdName == '/remove'){
-        var array = [val1];
-        bot.doRemove(telegram, user, array);
-    } else if(cmdName == '/getLocation'){
-        telegram.sendLocation(msg.from.id, [val1, val2]);
-    } else if(cmdName == '/raid'){
-        bot.doRaid(telegram, user, val1);
-    } else if(cmdName == '/radius'){
-        bot.doRadius(telegram, user, val1);
-    } else if(cmdName == '/pokemon'){
-        bot.doPokemon(telegram, user, val1);
-    } else if(cmdName == '/reset'){
-        bot.doReset(telegram, user, val1);
-    } else if(cmdName == '/start'){
-        bot.doStart(telegram, msg.from);
+    if(user || cmdName == '/start'){
+        if(cmdName == '/remove'){
+            var array = [val1];
+            bot.doRemove(telegram, user, array);
+        } else if(cmdName == '/getLocation'){
+            telegram.sendLocation(msg.from.id, [val1, val2]);
+        } else if(cmdName == '/raid'){
+            bot.doRaid(telegram, user, val1);
+        } else if(cmdName == '/radius'){
+            bot.doRadius(telegram, user, val1);
+        } else if(cmdName == '/pokemon'){
+            bot.doPokemon(telegram, user, val1);
+        } else if(cmdName == '/reset'){
+            bot.doReset(telegram, user, val1);
+        } else if(cmdName == '/start'){
+            bot.doStart(telegram, msg.from);
+        }
+    } else {
+        bot.doWarn(telegram, msg.from.id);
     }
+
 
 
 

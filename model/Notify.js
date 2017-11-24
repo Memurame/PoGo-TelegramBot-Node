@@ -111,7 +111,7 @@ class Notify{
             if(gym.re < now) raids.splice(i,1);
 
         }
-        this.doSave(user, raids);
+        this.doSave(user.uid, raids);
         var status = (queue.length > 0 ? queue : false);
         callback(status);
     }

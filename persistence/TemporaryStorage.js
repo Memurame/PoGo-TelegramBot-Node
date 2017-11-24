@@ -27,6 +27,14 @@ class TemporaryStorage{
         }
     }
 
+    remove(file){
+        try{
+            localStorage.removeItem(file);
+        }catch(err){
+            return '[ERROR]: Cannot remove LocalStorage: ' + err;
+        }
+    }
+
 }
 
 module.exports = TemporaryStorage;
