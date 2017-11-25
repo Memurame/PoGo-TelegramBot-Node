@@ -3,10 +3,13 @@
 const Bot = require('./model/Bot');
 const config = require('./config');
 const TeleBot = require('telebot');
+const Notify = require('./model/Notify');
 
 
 //init bot
 let bot = new Bot();
+
+let notify = new Notify();
 
 //init telegram
 let telegram = new TeleBot({
@@ -179,24 +182,44 @@ telegram.on('callbackQuery', function(msg){
 
 });
 
-telegram.on('inlineQuery', function(msg){
-
-   console.log('inlineQuery');
-});
-
 
 
 /* --------------------------------- */
 
+/*
 
+*/
+
+setInterval(function(){
+
+    notify.doServerRequest(function(data){
+        notify.prepareUsers(telegram, bot.users, data);
+        bot.doSave();
+    });
+
+
+}, config.loop);
+
+
+
+
+
+bot.channel = [{
+    "uid":"@SearchPorenta",
+    "firstname":"PorentaChannel",
+    "lastname":"",
+    "config":{"lat":47.061396,"lon":7.624113,"radius":50,"active":1,"raid":0,"raid_lvl":1,"pkmn":1,"mid":0,"gid":0},
+    "pokemon":[{"pid":"83"}],
+    "raids":[]}
+];
 
 
 setInterval(function(){
 
-    if(bot.status) bot.doServerRequest(telegram);
-    bot.doSave();
+    notify.doServerRequest(function(data){
+        notify.prepareUsers(telegram, bot.channel, data);
+    });
 
-
-}, config.loop);
+}, 20000);
 
 telegram.start();

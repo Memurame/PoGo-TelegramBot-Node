@@ -2,10 +2,11 @@ const config = require('../config');
 const Storage = require('../persistence/Storage');
 const Pokemon = require('./Pokemon');
 const moment = require('moment');
-const TeleBot = require('telebot');
 var Promise = require("bluebird");
 const rad2deg = require('rad2deg');
 const deg2rad = require('deg2rad');
+const request = require('request');
+const User = require('./User');
 
 class Notify{
 
@@ -14,6 +15,8 @@ class Notify{
         this.pokemon = new Pokemon();
 
         this.storage = new Storage();
+
+        this.data = [];
 
     }
 
@@ -36,49 +39,37 @@ class Notify{
         if(anzPkmn > 0){
             for(var i = 0; i< anzPkmn; i++){
                 let pkmn = data[i];
-                if(pkmn.eid > user.config.mid){
-                    mid = pkmn.eid;
+                mid = pkmn.eid;
 
-                    var earth_radius = 6371;
-                    var radius = user.config.radius;
-                    var maxLat = user.config.lat + rad2deg(radius / earth_radius);
-                    var minLat = user.config.lat - rad2deg(radius / earth_radius);
-                    var maxLon = user.config.lon + rad2deg(radius / earth_radius / Math.cos(deg2rad(user.config.lat)));
-                    var minLon = user.config.lon - rad2deg(radius / earth_radius / Math.cos(deg2rad(user.config.lat)));
+                if(user.getPokemonIndex(pkmn.pokemon_id) !== false){
 
+                    let disappear = moment(pkmn['disappear_time']),
+                        disappearFormated = moment.unix(disappear).format("HH:mm:ss"),
+                        now = moment().unix(),
+                        difference = disappear.diff(now),
+                        timeleft = moment.unix(difference).format("mm[m] ss[s]");
 
-                    if(pkmn.latitude < maxLat && pkmn.latitude > minLat && pkmn.longitude < maxLon && pkmn.longitude > minLon){
-                        if(user.getPokemonIndex(pkmn.pokemon_id) !== false){
+                    let text = '*' + this.pokemon.getName(pkmn.pokemon_id) + '*\n';
+                    text += 'Verfügbar bis '+ disappearFormated +' ( ' + timeleft + ' )';
 
-                            let disappear = moment(pkmn['disappear_time']),
-                                disappearFormated = moment.unix(disappear).format("HH:mm:ss"),
-                                now = moment().unix(),
-                                difference = disappear.diff(now),
-                                timeleft = moment.unix(difference).format("mm[m] ss[s]");
-
-                            let text = '*' + this.pokemon.getName(pkmn.pokemon_id) + '*\n';
-                            text += 'Verfügbar bis '+ disappearFormated +' ( ' + timeleft + ' )';
-
-                            queue.push(['message', text]);
-                            queue.push(['location', pkmn.latitude, pkmn.longitude]);
-
-                        }
-                    }
+                    queue.push(['message', text]);
+                    queue.push(['location', pkmn.latitude, pkmn.longitude]);
 
                 }
+
             }
-            if(mid) user.config.mid = mid + 1;
-            var status = (queue.length > 0 ? queue : false);
-            callback(status);
         }
+        if(mid) user.config.mid = mid + 1;
+        var status = (queue.length > 0 ? queue : false);
+        callback(status);
     }
 
-    prepareRaid(user, raids, callback){
+    prepareRaid(user){
         let queue = [],
             now = moment().unix();
 
-        for(var i = 0; i < raids.length; i++){
-            let gym = raids[i],
+        for(var i = 0; i < user.raids.length; i++){
+            let gym = user.raids[i],
                 rb = moment.unix(gym['rb']).format("HH:mm:ss"),
                 re = moment.unix(gym['re']).format("HH:mm:ss"),
                 text =  "",
@@ -108,28 +99,22 @@ class Notify{
                 }
                 if(send) queue.push(['message', text]);
             }
-            if(gym.re < now) raids.splice(i,1);
+            if(gym.re < now) user.raids.splice(i,1);
 
         }
-        this.doSave(user.uid, raids);
-        var status = (queue.length > 0 ? queue : false);
-        callback(status);
+        return (queue.length > 0 ? queue : false);
     }
 
-    addRaidToQueue(data, user, callback){
+    searchRaids(user, callback){
         let gid = '',
-            anzGym = data.length,
-            raids = [],
-            now = moment().unix();
+            anzGym = this.data.gyms.length,
+            raids = [];
 
-        this.storage.readRaids(user.uid, function(data){
-            try{ raids = data; }catch(err){ }
-        });
 
         if(anzGym > 0){
 
             for(var i = 0; i< anzGym; i++){
-                let gym = data[i];
+                let gym = this.data.gyms[i];
 
                 var earth_radius = 6371;
                 var radius = user.config.radius;
@@ -140,57 +125,155 @@ class Notify{
 
 
                 if(gym.latitude < maxLat && gym.latitude > minLat && gym.longitude < maxLon && gym.longitude > minLon) {
-
-                    if (gym.lvl && now <= gym.re) {
-
-                        let index = raids.map(function (e) {
-                            return e.gym_id;
-                        }).indexOf(gym.gym_id);
-
-                        if(index >= 0 && raids[index]['re'] < now){
-                            raids.splice(index,1);
-                            index = -1;
-                        }
-                        if (index == -1) {
-                            let raid = {
-                                gym_id: gym.gym_id,
-                                name: gym.name,
-                                ts: gym.ts,
-                                rb: gym.rb,
-                                rs: gym.rs,
-                                re: gym.re,
-                                lvl: gym.lvl,
-                                rpid: gym.rpid,
-                                rcp: gym.rcp,
-                                status: 0
-                            };
-                            raids.push(raid);
-                        } else {
-                            if (gym.rpid) raids[index].rpid = gym.rpid;
-                            if (gym.rcp) raids[index].rcp = gym.rcp;
-                        }
-                    }
+                   raids.push(gym);
                 }
-
-
-
-
-
-
-
-
             }
             callback(raids);
         }
     }
 
+    addRaidToQueue(data, user, callback){
+        let anzGym = data.length,
+            now = moment().unix();
 
-    doSave(user, data){
-        let storage = new Storage();
-        storage.saveRaids(user, data, function(status){
+        if(!user.raids) user.raids = [];
 
-        });
+        if(anzGym > 0){
+
+            for(var i = 0; i< anzGym; i++){
+                let gym = data[i];
+
+                if (gym.lvl && now <= gym.re) {
+
+                    let index = user.raids.map(function (e) {
+                        return e.gym_id;
+                    }).indexOf(gym.gym_id);
+
+                    if(index >= 0 && user.raids[index]['re'] < now){
+                        user.raids.splice(index,1);
+                        index = -1;
+                    }
+                    if (index == -1) {
+                        let raid = {
+                            gym_id: gym.gym_id,
+                            name: gym.name,
+                            ts: gym.ts,
+                            rb: gym.rb,
+                            rs: gym.rs,
+                            re: gym.re,
+                            lvl: gym.lvl,
+                            rpid: gym.rpid,
+                            rcp: gym.rcp,
+                            status: 0
+                        };
+                        user.raids.push(raid);
+                    } else {
+                        if (gym.rpid) user.raids[index].rpid = gym.rpid;
+                        if (gym.rcp) user.raids[index].rcp = gym.rcp;
+                    }
+                }
+            }
+
+            let res =  this.prepareRaid(user);
+            callback(res);
+        }
     }
+
+    doServerRequest(callback){
+
+
+        var earth_radius = 6371;
+        var radius = config.radius;
+        var maxLat = config.lat + rad2deg(radius / earth_radius);
+        var minLat = config.lat - rad2deg(radius / earth_radius);
+        var maxLon = config.lon + rad2deg(radius / earth_radius / Math.cos(deg2rad(config.lat)));
+        var minLon = config.lon - rad2deg(radius / earth_radius / Math.cos(deg2rad(config.lat)));
+
+        var ajdata = {
+            'mid': 0,
+            'gid': 0,
+            'w': minLon,
+            'e': maxLon,
+            'n': maxLat,
+            's': minLat
+        };
+
+        var options = {
+            url: config.URL,
+            method: 'GET',
+            qs: ajdata,
+            timeout: 10000
+        };
+        //let data = [];
+        request(options, function (error, response, body) {
+            callback(JSON.parse(body));
+        }).on('error', function (e) {
+            console.log("Got error: " + e.message);
+        });
+
+
+
+    }
+
+    searchPokemon(user, callback){
+        let pokemon = [],
+            mid = '',
+            anzPkmn = this.data.pokemons.length;
+        if(anzPkmn > 0) {
+            for (var i = 0; i < anzPkmn; i++) {
+                let pkmn = this.data.pokemons[i];
+                if (pkmn.eid > user.config.mid) {
+
+                    var earth_radius = 6371;
+                    var radius = user.config.radius;
+                    var maxLat = user.config.lat + rad2deg(radius / earth_radius);
+                    var minLat = user.config.lat - rad2deg(radius / earth_radius);
+                    var maxLon = user.config.lon + rad2deg(radius / earth_radius / Math.cos(deg2rad(user.config.lat)));
+                    var minLon = user.config.lon - rad2deg(radius / earth_radius / Math.cos(deg2rad(user.config.lat)));
+
+
+                    if (pkmn.latitude < maxLat && pkmn.latitude > minLat && pkmn.longitude < maxLon && pkmn.longitude > minLon) {
+                        pokemon.push(pkmn);
+                    }
+
+                }
+            }
+            callback(pokemon);
+        }
+    }
+
+    prepareUsers(telegram, users, data){
+        this.data = data;
+
+
+        let self = this;
+        for (var i = 0; i < users.length; i++) {
+
+            let user = new User(users[i].uid, users[i].firstname, users[i].lastname, users[i].config, users[i].pokemon, users[i].raids);
+            if(config.pokemon && user.config.pkmn){
+                self.searchPokemon(user, function(pokemon){
+                    self.addPokemonToQueue(pokemon, user, function(queue) {
+                        if(queue) self.sendMessages(telegram, user.uid, queue);
+                    });
+
+                });
+
+
+            }
+
+            if(config.raid && user.config.raid){
+                self.searchRaids(user, function(raids){
+                    self.addRaidToQueue(raids, user, function(res){
+                        if(res) this.sendMessages(telegram, user.uid, res);
+                    });
+                });
+
+            }
+
+
+        }
+    }
+
 
 }
 

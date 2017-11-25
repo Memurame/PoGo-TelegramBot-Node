@@ -20,6 +20,7 @@ class Bot{
 
         //setup user array
         this.users = [];
+        this.channel = [];
 
         // server request
         this.data = null;
@@ -179,7 +180,7 @@ class Bot{
     doCheck(telegram, uid, notify = true){
         let user = this.findUser(uid);
         if(user){
-            user = new User(user.uid, user.firstname, user.lastname, user.config, user.pokemon);
+            user = new User(user.uid, user.firstname, user.lastname, user.config, user.pokemon, user.raids);
             return user;
         }
         if(notify) this.doWarn(telegram, uid);
@@ -400,7 +401,6 @@ class Bot{
 
         let msg = '';
         let replyMarkup;
-        let storage = new Storage();
         if(reset == 'yes'){
             msg = 'Dein Profil wurde komplet gelöscht.\nDu kannst unten auf den Button klicken um ein neues zu erstellen.';
 
@@ -409,7 +409,6 @@ class Bot{
             }).indexOf(user.uid);
 
             this.doSendToAdmins(telegram, 'Deleted User: ' + user.uid);
-            storage.removeRaid(user.uid);
             this.users.splice(index,1);
 
 
@@ -443,67 +442,6 @@ class Bot{
             msg,
             {'parse': 'Markdown'}
         );
-
-    }
-
-    doServerRequest(telegram){
-        let notify = new Notify();
-
-        var earth_radius = 6371;
-        var radius = config.radius;
-        var maxLat = config.lat + rad2deg(radius / earth_radius);
-        var minLat = config.lat - rad2deg(radius / earth_radius);
-        var maxLon = config.lon + rad2deg(radius / earth_radius / Math.cos(deg2rad(config.lat)));
-        var minLon = config.lon - rad2deg(radius / earth_radius / Math.cos(deg2rad(config.lat)));
-
-        var ajdata = {
-            'mid': 0,
-            'gid': 0,
-            'w': minLon,
-            'e': maxLon,
-            'n': maxLat,
-            's': minLat
-        };
-
-        var options = {
-            url: config.URL,
-            method: 'GET',
-            qs: ajdata,
-            timeout: 10000
-        };
-        let self = this;
-        request(options, function (error, response, body) {
-            self.data = JSON.parse(body);
-
-            try{
-                for (var i = 0; i < self.users.length; i++) {
-                    let user = new User(self.users[i].uid, self.users[i].firstname, self.users[i].lastname, self.users[i].config, self.users[i].pokemon);
-                    if(config.pokemon && user.config.pkmn){
-                        notify.addPokemonToQueue(self.data.pokemons, user, function (res) {
-                            if(res) notify.sendMessages(telegram, user.uid, res);
-                        });
-                    }
-                    if(config.raid && user.config.raid){
-                        notify.addRaidToQueue(self.data.gyms, user, function(res){
-                            notify.prepareRaid(user, res, function(filtered){
-                                if(filtered) notify.sendMessages(telegram, user.uid, filtered);
-                            });
-
-                        });
-                    }
-
-                }
-            } catch (e) {
-                console.log("REQUEST JSON ERROR\n" +
-                    e);
-                self.doSendToAdmins(telegram, 'Request error!');
-
-            }
-
-
-        }).on('error', function (e) {
-            console.log("Got error: " + e.message);
-        });
 
     }
 

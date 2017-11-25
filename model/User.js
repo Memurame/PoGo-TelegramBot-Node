@@ -1,6 +1,6 @@
 class User{
 
-    constructor(uid, firstname, lastname, config, pokemon){
+    constructor(uid, firstname, lastname, config, pokemon, raids){
         this.uid = uid;
         this.firstname = firstname || '';
         this.lastname = lastname || '';
@@ -15,6 +15,7 @@ class User{
                 'mid': 0,
                 'gid': 0};
         this.pokemon = pokemon || [];
+        this.raids = raids || [];
 
 
     }

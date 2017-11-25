@@ -37,29 +37,6 @@ class Storage{
         callback(objs);
     }
 
-    saveRaids(user, objs, callback){
-        let json = JSON.stringify(objs);
-        let storage = new TemporaryStorage();
-        let status = storage.save(json, 'raid-storage-' + user);
-        callback(status);
-    }
-
-    readRaids(user, callback){
-        let storage = new TemporaryStorage();
-        let json = storage.read('raid-storage-' + user);
-        let objs = [];
-        if(json) objs = JSON.parse(json);
-
-
-
-
-        callback(objs);
-    }
-
-    removeRaid(uid){
-        let storage = new TemporaryStorage();
-        storage.remove('raid-storage-' + uid);
-    }
 
 }
 
