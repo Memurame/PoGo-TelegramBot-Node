@@ -1,14 +1,14 @@
 const config = require('../config');
-const Storage = require('../persistence/Storage');
 const Pokemon = require('./Pokemon');
 const moment = require('moment');
-var Promise = require("bluebird");
+const Promise = require("bluebird");
 const rad2deg = require('rad2deg');
 const deg2rad = require('deg2rad');
 const request = require('request');
 const User = require('./User');
-var MongoClient = require('mongodb').MongoClient;
-var url = "mongodb://localhost:27017/pogobot";
+const TeleBot = require('telebot');
+const MongoClient = require('mongodb').MongoClient;
+const url = "mongodb://localhost:27017/pogobot";
 
 class Notify{
 
@@ -17,6 +17,8 @@ class Notify{
         this.pokemon = new Pokemon();
 
         this.data = [];
+
+        if(config.telegram) this.telegram = new TeleBot(config.telegramAPI);
 
 
         MongoClient.connect(url, function(err, db) {
@@ -29,14 +31,20 @@ class Notify{
 
     }
 
-    sendMessages(bot, chatId, messages) {
-        //console.log('sendMessage: '+chatId+' -> ' + messages);
+    sendMessages(chatId, messages) {
+        let self = this;
         return Promise.mapSeries(messages, function (message) {
-            if (message[0] == 'message') {
-                return bot.sendMessage(chatId, message[1], {'parse': 'Markdown'});
-            } else if (message[0] == 'location') {
-                return bot.sendLocation(chatId, [message[1], message[2]]);
+
+
+
+            if(config.telegram){
+                if (message[0] == 'message') {
+                    return self.telegram.sendMessage(chatId, message[1], {'parse': 'Markdown'});
+                } else if (message[0] == 'location') {
+                    return self.telegram.sendLocation(chatId, [message[1], message[2]]);
+                }
             }
+
         });
     }
 
@@ -213,20 +221,20 @@ class Notify{
             qs: ajdata,
             timeout: 10000
         };
-        //let data = [];
+        let data = [];
         request(options, function (error, response, body) {
-            let data = JSON.parse(body);
-
+            data = JSON.parse(body);
+            console.log()
             MongoClient.connect(url, function(err, db) {
                 if (err) throw err;
                 db.collection("pokemon").insertMany(data.pokemons, function(err, res) {
                     if (err) throw err;
                     console.log("Number of documents inserted: " + res.insertedCount);
                     db.close();
-                    callback(data);
-                });
-            });
 
+                });
+
+            });
         }).on('error', function (e) {
             console.log("Got error: " + e.message);
         });
@@ -240,6 +248,23 @@ class Notify{
             mid = '',
             anzPkmn = this.data.pokemons.length;
         if(anzPkmn > 0) {
+
+
+            MongoClient.connect(url, function(err, db) {
+                if (err) throw err;
+                db.collection("pokemon").find({}, { latitude: false }).toArray(function(err, result) {
+                    if (err) throw err;
+                    console.log(result);
+                    db.close();
+                });
+            });
+
+
+
+
+
+
+
             for (var i = 0; i < anzPkmn; i++) {
                 let pkmn = this.data.pokemons[i];
                 if (pkmn.eid > user.config.mid) {
@@ -262,7 +287,7 @@ class Notify{
         }
     }
 
-    prepareUsers(telegram, users, data){
+    prepareUsers(users, data){
         this.data = data;
 
 
@@ -273,7 +298,7 @@ class Notify{
             if(config.pokemon && user.config.pkmn){
                 self.searchPokemon(user, function(pokemon){
                     self.addPokemonToQueue(pokemon, user, function(queue) {
-                        if(queue) self.sendMessages(telegram, user.uid, queue);
+                        if(queue) self.sendMessages(user.uid, queue);
                     });
 
                 });
@@ -284,7 +309,7 @@ class Notify{
             if(config.raid && user.config.raid){
                 self.searchRaids(user, function(raids){
                     self.addRaidToQueue(raids, user, function(res){
-                        if(res) this.sendMessages(telegram, user.uid, res);
+                        if(res) self.sendMessages(user.uid, res);
                     });
                 });
 

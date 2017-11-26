@@ -20,10 +20,6 @@ class Bot{
 
         //setup user array
         this.users = [];
-        this.channel = [];
-
-        // server request
-        this.data = null;
 
         //setup admin array
         this.admins = [];
@@ -41,7 +37,7 @@ class Bot{
         });
 
         //set main admins
-        if(this.admins.indexOf(config.adminID.toString()) == -1) this.admins.push(config.adminID.toString());
+        if(this.admins.indexOf(config.telegramAdminID.toString()) == -1) this.admins.push(config.telegramAdminID.toString());
     }
 
     findUser(uid){

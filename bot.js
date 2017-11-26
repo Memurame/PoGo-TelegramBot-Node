@@ -4,6 +4,7 @@ const Bot = require('./model/Bot');
 const config = require('./config');
 const TeleBot = require('telebot');
 const Notify = require('./model/Notify');
+const Web = require('./model/Web.js');
 
 
 //init bot
@@ -11,9 +12,11 @@ let bot = new Bot();
 
 let notify = new Notify();
 
+let webinterface = new Web(bot.users);
+
 //init telegram
 let telegram = new TeleBot({
-    token: config.API,
+    token: config.telegramAPI,
     polling: {
         interval: 1000,
         timeout: 0,
@@ -193,7 +196,7 @@ telegram.on('callbackQuery', function(msg){
 setInterval(function(){
 
     notify.doServerRequest(function(data){
-        notify.prepareUsers(telegram, bot.users, data);
+        notify.prepareUsers(bot.users, data);
         bot.doSave();
     });
 
@@ -201,25 +204,5 @@ setInterval(function(){
 }, config.loop);
 
 
-
-
-
-bot.channel = [{
-    "uid":"@SearchPorenta",
-    "firstname":"PorentaChannel",
-    "lastname":"",
-    "config":{"lat":47.061396,"lon":7.624113,"radius":50,"active":1,"raid":0,"raid_lvl":1,"pkmn":1,"mid":0,"gid":0},
-    "pokemon":[{"pid":"83"}],
-    "raids":[]}
-];
-
-
-setInterval(function(){
-
-    notify.doServerRequest(function(data){
-        notify.prepareUsers(telegram, bot.channel, data);
-    });
-
-}, 20000);
 
 telegram.start();
