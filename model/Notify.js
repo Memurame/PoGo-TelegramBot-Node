@@ -7,6 +7,8 @@ const rad2deg = require('rad2deg');
 const deg2rad = require('deg2rad');
 const request = require('request');
 const User = require('./User');
+var MongoClient = require('mongodb').MongoClient;
+var url = "mongodb://localhost:27017/pogobot";
 
 class Notify{
 
@@ -14,9 +16,16 @@ class Notify{
         //init pokemon
         this.pokemon = new Pokemon();
 
-        this.storage = new Storage();
-
         this.data = [];
+
+
+        MongoClient.connect(url, function(err, db) {
+            if (err) throw err;
+            db.createCollection("pokemon", function(err, res) {
+                if (err) throw err;
+                db.close();
+            });
+        });
 
     }
 
@@ -206,7 +215,18 @@ class Notify{
         };
         //let data = [];
         request(options, function (error, response, body) {
-            callback(JSON.parse(body));
+            let data = JSON.parse(body);
+
+            MongoClient.connect(url, function(err, db) {
+                if (err) throw err;
+                db.collection("pokemon").insertMany(data.pokemons, function(err, res) {
+                    if (err) throw err;
+                    console.log("Number of documents inserted: " + res.insertedCount);
+                    db.close();
+                    callback(data);
+                });
+            });
+
         }).on('error', function (e) {
             console.log("Got error: " + e.message);
         });
