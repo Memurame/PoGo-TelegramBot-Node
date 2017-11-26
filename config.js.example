@@ -1,12 +1,21 @@
 // Telegram
-exports.API = 'API';
-exports.adminID = YourAdminID;
-exports.locale = 'de';
+exports.telegram = true;
+exports.telegramAPI = 'API';
+exports.telegramAdminID = YourTelegramID;
+
 
 // PokemonGo API
-exports.URL = 'UrlToYourAPI';
+exports.URL = 'URL';
 
 // System
 exports.develop = true;
 exports.debug = true;
-exports.loop = 20000;
+exports.locale = 'de';
+
+// Bot
+exports.loop = 10000;
+exports.radius = 50;
+exports.lat = 50.05874;
+exports.lon = 8.615006;
+exports.pokemon = true;
+exports.raid = true;
